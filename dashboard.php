@@ -2428,7 +2428,26 @@ $csrf = dashboardCsrfToken();
                 <?php endif; ?>
 
 
-                <!-- =================================================
+                                <!-- STATEMENT OF ACCOUNT -->
+                <?php if ($page === 'bills' && $billsTab === 'unpaid'): ?>
+                    <?php $soaMonth = trim((string) ($latestBill['BillMonth'] ?? '')); ?>
+                    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+                        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-[.14em] text-paleco-700 dark:text-paleco-300">Statement of Account</p>
+                                <h2 class="mt-1 text-lg font-bold text-slate-900 dark:text-white">Latest billing statement</h2>
+                                <p class="mt-2 text-sm text-slate-600 dark:text-slate-300"><?= dashboardEscape(formatConsumerAccountCode($selectedAccount)) ?></p>
+                                <?php if ($soaMonth !== ''): ?>
+                                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Billing month: <?= dashboardEscape(formatBillMonth($soaMonth)) ?></p>
+                                <?php else: ?>
+                                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Statement of Account is not yet available.</p>
+                                <?php endif; ?>
+                            </div>
+                            <button type="button" data-soa-open data-soa-account-code="<?= dashboardEscape(trim((string) ($selectedAccount['AcctCode'] ?? ''))) ?>" <?= $soaMonth === '' ? 'disabled' : '' ?> class="inline-flex min-h-11 items-center justify-center rounded-xl bg-paleco-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-paleco-800 focus:outline-none focus:ring-2 focus:ring-paleco-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-slate-900">View SOA</button>
+                        </div>
+                    </section>
+                <?php endif; ?>
+<!-- =================================================
                      MY BILLS
                      ================================================= -->
 
@@ -2969,6 +2988,23 @@ $csrf = dashboardCsrfToken();
     cancel?.addEventListener('click', close); backdrop?.addEventListener('click', close);
     confirm?.addEventListener('click', () => { if (!activeForm) return; const input = activeForm.querySelector('[data-friendly-label-input]'); const action = activeForm.querySelector('[data-friendly-label-action]'); input.value = ''; action.value = 'remove_label'; confirm.disabled = true; cancel.disabled = true; confirm.textContent = 'Removing…'; activeForm.requestSubmit(); });
     document.addEventListener('keydown', (event) => { if (modal.classList.contains('hidden')) return; if (event.key === 'Escape') { event.preventDefault(); close(); } if (event.key === 'Tab') { const controls = Array.from(modal.querySelectorAll('button:not([disabled])')); const first = controls[0]; const last = controls[controls.length - 1]; if (!first) return; if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); } } });
+})();
+</script><div id="soa-modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="soa-modal-title" aria-hidden="true">
+    <div data-soa-backdrop class="absolute inset-0 bg-slate-950/60"></div>
+    <div class="relative z-10 flex max-h-[calc(100vh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
+        <div class="flex items-start justify-between border-b border-slate-200 p-5 dark:border-slate-800"><div><h2 id="soa-modal-title" class="text-lg font-bold text-slate-900 dark:text-white">Statement of Account</h2><p data-soa-status class="mt-1 text-sm text-slate-500 dark:text-slate-400">Preparing your statement…</p></div><button type="button" data-soa-close class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-paleco-500 dark:hover:bg-slate-800 dark:hover:text-white" aria-label="Close Statement of Account">&#215;</button></div>
+        <div class="min-h-0 flex-1 bg-slate-100 p-3 dark:bg-slate-950"><iframe data-soa-frame title="Statement of Account PDF preview" class="hidden h-[65vh] min-h-80 w-full rounded-lg border-0 bg-white" referrerpolicy="no-referrer"></iframe></div>
+        <div class="flex flex-col-reverse gap-3 border-t border-slate-200 p-4 sm:flex-row sm:justify-end dark:border-slate-800"><button type="button" data-soa-close class="min-h-11 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Close</button><a data-soa-download class="hidden min-h-11 rounded-xl bg-paleco-700 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-paleco-800" target="_blank" rel="noopener noreferrer">Open PDF</a></div>
+    </div>
+</div>
+<script>
+(() => {
+    const modal = document.getElementById('soa-modal'), opener = document.querySelector('[data-soa-open]'); if (!modal || !opener) return;
+    const status = modal.querySelector('[data-soa-status]'), frame = modal.querySelector('[data-soa-frame]'), download = modal.querySelector('[data-soa-download]'), expectedAccountCode = opener.dataset.soaAccountCode || '', csrf = <?= json_encode($csrf, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    let trigger = null, requestId = 0;
+    const close = () => { requestId++; frame.src = 'about:blank'; frame.classList.add('hidden'); download.classList.add('hidden'); modal.classList.add('hidden'); modal.classList.remove('flex'); modal.setAttribute('aria-hidden', 'true'); document.body.classList.remove('overflow-hidden'); trigger?.focus(); };
+    const open = async () => { trigger = opener; const id = ++requestId; status.textContent = 'Preparing your statement…'; frame.src = 'about:blank'; frame.classList.add('hidden'); download.classList.add('hidden'); modal.classList.remove('hidden'); modal.classList.add('flex'); modal.setAttribute('aria-hidden', 'false'); document.body.classList.add('overflow-hidden'); modal.querySelector('[data-soa-close]')?.focus(); try { const form = new FormData(); form.append('csrf_token', csrf); const response = await fetch('soa.php', {method: 'POST', body: form, credentials: 'same-origin', cache: 'no-store'}); const payload = await response.json(); if (id !== requestId) return; if (!response.ok || !payload.ok || !payload.url || payload.account_code !== expectedAccountCode) throw new Error(payload.message || 'Statement of Account is currently unavailable.'); frame.src = payload.url; frame.classList.remove('hidden'); download.href = payload.url; download.classList.remove('hidden'); status.textContent = 'Your statement is ready. If the preview is blocked, use Open PDF.'; } catch (error) { if (id === requestId) status.textContent = error.message || 'Statement of Account is currently unavailable.'; } };
+    opener.addEventListener('click', open); modal.querySelectorAll('[data-soa-close]').forEach((button) => button.addEventListener('click', close)); modal.querySelector('[data-soa-backdrop]')?.addEventListener('click', close); document.addEventListener('keydown', (event) => { if (!modal.classList.contains('hidden') && event.key === 'Escape') { event.preventDefault(); close(); } });
 })();
 </script></body>
 </html>

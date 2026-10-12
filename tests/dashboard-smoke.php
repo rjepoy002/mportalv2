@@ -87,4 +87,6 @@ if (dashboardFormatAccountStatus('active') !== 'ACTIVE') {
 if (dashboardDisplayAccountName(['account_nickname' => 'Main House', 'Name' => 'PADRONES']) !== 'Main House') {
     throw new RuntimeException('Friendly label capitalization was altered.');
 }
-echo "Dashboard smoke check passed.\n";
+if (!str_contains($dashboardSource, 'Statement of Account') || !str_contains($dashboardSource, 'data-soa-open') || !str_contains($dashboardSource, "fetch('soa.php'")) {
+    throw new RuntimeException('Statement of Account controls did not render securely.');
+}echo "Dashboard smoke check passed.\n";
