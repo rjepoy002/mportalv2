@@ -1,1 +1,4 @@
 /config/google.php
+.env
+.env.*
+!.env.example

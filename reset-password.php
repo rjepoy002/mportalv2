@@ -1,6 +1,11 @@
 <?php
 
+header('Referrer-Policy: no-referrer');
+header('Cache-Control: no-store');
+header('Pragma: no-cache');
+
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/password-recovery.php';
 
 $message = '';
 $messageType = '';
@@ -113,7 +118,7 @@ if (
 
         $messageType = 'error';
 
-    } elseif (strlen($newPassword) < 8) {
+    } elseif (preg_match_all('/./us', $newPassword) < 8) {
 
         $message =
             'Password must be at least 8 characters.';
@@ -134,6 +139,11 @@ if (
 
         $messageType = 'error';
 
+    } elseif ($confirmPassword === '') {
+
+        $message = 'Please confirm your password.';
+        $messageType = 'error';
+
     } elseif ($newPassword !== $confirmPassword) {
 
         $message =
@@ -149,69 +159,16 @@ if (
          * -----------------------------------------
          */
 
-        $passwordHash = password_hash(
-            $newPassword,
-            PASSWORD_DEFAULT
-        );
-
-
-        /*
-         * -----------------------------------------
-         * UPDATE PASSWORD + INVALIDATE TOKEN
-         * -----------------------------------------
-         */
-
         try {
-
-            $pdo->beginTransaction();
-
-
-            /*
-             * Update user's password
-             */
-
-            $updateUser = $pdo->prepare(
-                'UPDATE users
-                 SET password_hash = :password
-                 WHERE id = :user_id'
-            );
-
-            $updateUser->execute([
-                ':password' => $passwordHash,
-                ':user_id' => $user['user_id']
-            ]);
-
-
-            /*
-             * Mark reset token as used
-             */
-
-            $updateReset = $pdo->prepare(
-                'UPDATE password_resets
-                 SET used_at = NOW()
-                 WHERE id = :reset_id'
-            );
-
-            $updateReset->execute([
-                ':reset_id' => $resetRecord['reset_id']
-            ]);
-
-
-            $pdo->commit();
-
-
-            /*
-             * Password successfully changed
-             */
-
-            header(
-                'Location: index.php?reset=success'
-            );
-
-            exit;
-
-
-        } catch (PDOException $e) {
+            if (!recovery_reset_password($pdo, $resetRecord, $tokenHash, $newPassword)) {
+                $message = 'This password reset link is invalid or has expired.';
+                $messageType = 'error';
+                $user = null;
+            } else {
+                header('Location: index.php?reset=success');
+                exit;
+            }
+        } catch (Throwable $e) {
 
             if ($pdo->inTransaction()) {
 
@@ -220,8 +177,7 @@ if (
 
 
             error_log(
-                'Password reset error: '
-                . $e->getMessage()
+                'Password reset failed.'
             );
 
 

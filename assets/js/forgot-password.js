@@ -7,8 +7,15 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!form || !email || !submitButton) {
         return;
     }
+    let submitting = false;
+    const initialButton = submitButton.innerHTML;
 
     form.addEventListener('submit', function (event) {
+
+        if (submitting || event.defaultPrevented) {
+            event.preventDefault();
+            return;
+        }
 
         const emailValue = email.value.trim();
 
@@ -29,9 +36,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Prevent multiple submissions
+        submitting = true;
         submitButton.disabled = true;
         submitButton.textContent = 'Sending...';
 
+    });
+
+    window.addEventListener('pageshow', function () {
+        submitting = false;
+        submitButton.disabled = false;
+        submitButton.innerHTML = initialButton;
     });
 
 });
