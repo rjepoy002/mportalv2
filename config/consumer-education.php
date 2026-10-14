@@ -1,6 +1,7 @@
 <?php
 
 const PALECO_CONSUMER_EDUCATION_PLAYLIST_ID = 'PLQWmQ9rNn-E8';
+const PALECO_CONSUMER_EDUCATION_INITIAL_VIDEO_ID = 'hRx-hV4XoJM';
 
 const PALECO_CONSUMER_EDUCATION_VIDEOS = [
     ['id' => '6VcVyVUIKPc', 'title' => 'PALECO Collection Partners'],
@@ -39,6 +40,8 @@ function consumerEducationVideos(): array
 
     return PALECO_CONSUMER_EDUCATION_VIDEOS;
 }
+
+require_once __DIR__ . '/../includes/education-playlist.php';
 
 function consumerEducationPlaylistUrl(): string
 {

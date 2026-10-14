@@ -2,10 +2,10 @@
 
 return [
     'host'       => 'smtp.gmail.com',
-    'username'   => 'paleco.mco.portal@gmail.com',
-    'password'   => 'whqu gfoe uojp xaeq',
+    'username'   => 'ict.website.paleco@gmail.com',
+    'password'   => 'ldxk gyxc qbgs yowc',
     'port'       => 587,
     'encryption' => 'tls',
-    'from_email' => 'paleco.mco.portal@gmail.com',
+    'from_email' => 'ict.website.paleco@gmail.com',
     'from_name'  => 'PALECO MCO Portal'
 ];

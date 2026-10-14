@@ -18,7 +18,9 @@ if ($userDisplayName === '') {
 try {
     $playlistUrl = consumerEducationPlaylistUrl();
     $embedUrl = consumerEducationEmbedUrl();
-    $videos = consumerEducationVideos();
+    $playlist = consumerEducationPlaylist();
+    $videos = $playlist['videos'];
+    $initialVideo = consumerEducationInitialVideo($videos);
 } catch (Throwable $e) {
     http_response_code(500);
     exit('Consumer Education is temporarily unavailable.');
@@ -71,6 +73,9 @@ $navigation = [
         };
     </script>
     <link rel="stylesheet" href="assets/css/portal-shell.css">
+    <style>
+        #videoPagination[hidden], #videoPlayerError[hidden], #videoGrid .education-video[hidden] { display: none; }
+    </style>
     <script>
         (function () {
             try {
@@ -109,13 +114,20 @@ $navigation = [
                 </div>
 
                 <div class="p-5 sm:p-6">
-                    <div id="videoPlayer" class="flex aspect-video items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800/50" data-embed-url="<?= educationEscape($embedUrl) ?>">
-                        <div>
-                            <p class="text-sm font-semibold">Ready to load official PALECO videos</p>
-                            <p class="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500 dark:text-slate-400">Loading the player connects to YouTube. After it loads, open YouTube's playlist controls in the player to choose any available video. You can also open the full playlist directly.</p>
-                            <button id="loadVideos" type="button" class="mt-5 rounded-xl bg-paleco-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-paleco-800 focus:outline-none focus:ring-4 focus:ring-paleco-500/30">Load Videos</button>
-                        </div>
+                    <div id="videoPlayer" class="relative aspect-video overflow-hidden rounded-xl bg-slate-950" data-video-id="<?= educationEscape($initialVideo['id']) ?>" data-video-title="<?= educationEscape($initialVideo['title']) ?>">
+                        <button id="playSelectedVideo" type="button" class="group relative block h-full w-full focus:outline-none focus:ring-4 focus:ring-inset focus:ring-paleco-500" aria-label="Play <?= educationEscape($initialVideo['title']) ?>">
+                            <img src="<?= educationEscape($initialVideo['thumbnail']) ?>" alt="" class="h-full w-full object-cover" fetchpriority="high">
+                            <span class="absolute inset-0 flex items-center justify-center bg-black/25">
+                                <span class="rounded-full bg-paleco-700 px-7 py-4 text-lg font-bold text-white shadow-lg group-hover:bg-paleco-800">&#9654; Play</span>
+                            </span>
+                        </button>
                     </div>
+                    <p id="selectedVideoTitle" class="mt-3 font-semibold" aria-live="polite"><?= educationEscape($initialVideo['title']) ?></p>
+                    <p id="videoPlayerError" class="mt-2 text-sm text-slate-500 dark:text-slate-400" role="status" hidden></p>
+                    <a id="selectedVideoYouTube" href="https://www.youtube.com/watch?v=<?= educationEscape($initialVideo['id']) ?>" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block text-sm font-semibold text-paleco-700 dark:text-paleco-200">Open on YouTube &#8599;</a>
+                    <?php if ($playlist['stale']): ?>
+                        <p class="mt-3 text-sm text-slate-500 dark:text-slate-400" role="status">Showing saved PALECO videos. The playlist may not be current; use the full playlist link below for the latest videos.</p>
+                    <?php endif; ?>
 
                     <section class="mt-8" aria-labelledby="available-infomercials-heading">
                         <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
@@ -149,11 +161,13 @@ $navigation = [
                                     class="education-video group overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-sm transition hover:border-paleco-500 hover:shadow-card focus:outline-none focus:ring-4 focus:ring-paleco-500/20 dark:border-slate-700 dark:bg-slate-900"
                                     data-video-url="<?= educationEscape(consumerEducationVideoEmbedUrl($videoId)) ?>"
                                     data-video-title="<?= educationEscape($videoTitle) ?>"
-                                    aria-pressed="false"
+                                    data-video-id="<?= educationEscape($videoId) ?>"
+                                    data-video-thumbnail="<?= educationEscape($video['thumbnail']) ?>"
+                                    aria-pressed="<?= $videoId === $initialVideo['id'] ? 'true' : 'false' ?>"
                                 >
                                     <img
-                                        src="<?= educationEscape(consumerEducationThumbnailUrl($videoId)) ?>"
-                                        alt="<?= educationEscape($videoTitle) ?>"
+                                        src="<?= educationEscape($video['thumbnail']) ?>"
+                                        alt=""
                                         loading="lazy"
                                         class="aspect-video w-full object-cover"
                                     >
@@ -195,130 +209,6 @@ $navigation = [
 
 <script src="assets/js/theme.js"></script>
 <script src="assets/js/portal-shell.js"></script>
-<script>
-(function () {
-    const loadButton = document.getElementById('loadVideos');
-    const player = document.getElementById('videoPlayer');
-    const videoButtons = Array.from(document.querySelectorAll('.education-video'));
-    const videoGrid = document.getElementById('videoGrid');
-    const videoRange = document.getElementById('videoRange');
-    const videoPagination = document.getElementById('videoPagination');
-    const previousVideoPage = document.getElementById('previousVideoPage');
-    const nextVideoPage = document.getElementById('nextVideoPage');
-    const videoPageNumbers = document.getElementById('videoPageNumbers');
-    const videosPerPage = Number(videoGrid?.dataset.videosPerPage) || 6;
-    const totalVideoPages = Math.ceil(videoButtons.length / videosPerPage);
-    let currentVideoPage = 1;
-    function renderVideoPagination() {
-        if (!videoGrid || !videoRange) return;
-
-        if (videoButtons.length === 0) {
-            videoRange.textContent = 'No videos available.';
-            videoPagination?.setAttribute('hidden', '');
-            return;
-        }
-
-        const startIndex = (currentVideoPage - 1) * videosPerPage;
-        const endIndex = Math.min(startIndex + videosPerPage, videoButtons.length);
-
-        videoButtons.forEach((button, index) => {
-            button.hidden = index < startIndex || index >= endIndex;
-        });
-
-        videoRange.textContent = `Showing ${startIndex + 1}–${endIndex} of ${videoButtons.length} videos`;
-
-        if (totalVideoPages <= 1) {
-            videoPagination?.setAttribute('hidden', '');
-            return;
-        }
-
-        videoPagination?.removeAttribute('hidden');
-        previousVideoPage.disabled = currentVideoPage === 1;
-        nextVideoPage.disabled = currentVideoPage === totalVideoPages;
-        videoPageNumbers.replaceChildren();
-
-        for (let page = 1; page <= totalVideoPages; page += 1) {
-            const pageButton = document.createElement('button');
-            pageButton.type = 'button';
-            pageButton.textContent = String(page);
-            pageButton.className = page === currentVideoPage
-                ? 'rounded-lg bg-paleco-700 px-3 py-2 text-sm font-semibold text-white focus:outline-none focus:ring-4 focus:ring-paleco-500/30'
-                : 'rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-paleco-500/20 dark:border-slate-700 dark:hover:bg-slate-800';
-            pageButton.setAttribute('aria-label', `Go to infomercial page ${page}`);
-
-            if (page === currentVideoPage) {
-                pageButton.setAttribute('aria-current', 'page');
-            }
-
-            pageButton.addEventListener('click', () => {
-                currentVideoPage = page;
-                renderVideoPagination();
-            });
-            videoPageNumbers.appendChild(pageButton);
-        }
-    }
-
-    previousVideoPage?.addEventListener('click', () => {
-        if (currentVideoPage > 1) {
-            currentVideoPage -= 1;
-            renderVideoPagination();
-        }
-    });
-
-    nextVideoPage?.addEventListener('click', () => {
-        if (currentVideoPage < totalVideoPages) {
-            currentVideoPage += 1;
-            renderVideoPagination();
-        }
-    });
-    function loadPlayer(url, title) {
-        if (!player || !url) return;
-
-        const iframe = document.createElement('iframe');
-        iframe.src = url;
-        iframe.title = title;
-        iframe.className = 'h-full w-full rounded-xl';
-        iframe.loading = 'lazy';
-        iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-        iframe.allow = 'accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-        iframe.allowFullscreen = true;
-
-        player.replaceChildren(iframe);
-        player.dataset.loaded = 'true';
-    }
-
-    function selectVideo(button) {
-        videoButtons.forEach((videoButton) => {
-            videoButton.setAttribute('aria-pressed', 'false');
-            videoButton.classList.remove(
-                'ring-2', 'ring-paleco-500', 'border-paleco-500',
-                'bg-paleco-50', 'dark:bg-paleco-900/40'
-            );
-        });
-
-        button.setAttribute('aria-pressed', 'true');
-        button.classList.add(
-            'ring-2', 'ring-paleco-500', 'border-paleco-500',
-            'bg-paleco-50', 'dark:bg-paleco-900/40'
-        );
-    }
-
-    loadButton?.addEventListener('click', () => {
-        loadPlayer(
-            player?.dataset.embedUrl,
-            'Official PALECO Consumer Education YouTube playlist'
-        );
-    });
-
-    videoButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-            selectVideo(button);
-            loadPlayer(button.dataset.videoUrl, button.dataset.videoTitle);
-        });
-    });
-
-    renderVideoPagination();
-})();
-</script>
+<script src="assets/js/consumer-education.js"></script>
 </body>
 </html>
