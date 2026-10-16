@@ -5,7 +5,7 @@
  * boundary in deployed environments.
  */
 $root = dirname(__DIR__);
-$writableTables = ['users', 'email_verifications', 'password_resets', 'paleco_accounts'];
+$writableTables = ['users', 'email_verifications', 'password_resets', 'paleco_accounts', 'account_link_challenges', 'account_link_limits'];
 $files = [];
 $directory = new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS);
 $filter = new RecursiveCallbackFilterIterator(
@@ -31,7 +31,7 @@ foreach ($files as $file) {
         $sql = str_ends_with(strtolower($file), '.sql') ? $token[0] : $token[1];
         $line = str_ends_with(strtolower($file), '.sql') ? 1 : $token[2];
         preg_match_all(
-            '/\b(?:INSERT\s+INTO|REPLACE\s+INTO|UPDATE|DELETE\s+FROM|ALTER\s+TABLE|DROP\s+TABLE|TRUNCATE\s+TABLE|CREATE\s+TABLE)\s+(?:`?(?<schema>[a-z_][a-z_0-9]*)`?\s*\.\s*)?`?(?<table>[a-z_][a-z_0-9]*)`?/i',
+            '/\b(?:INSERT\s+INTO|REPLACE\s+INTO|(?<!KEY )UPDATE|DELETE\s+FROM|ALTER\s+TABLE|DROP\s+TABLE|TRUNCATE\s+TABLE|CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?)\s+(?:`?(?<schema>[a-z_][a-z_0-9]*)`?\s*\.\s*)?`?(?<table>[a-z_][a-z_0-9]*)`?/i',
             $sql,
             $matches,
             PREG_SET_ORDER

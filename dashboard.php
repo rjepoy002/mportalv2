@@ -518,6 +518,8 @@ $isDevelopmentMode = in_array(
 );
 
 
+$accountLinker = new PalecoAccountLinker($pdo, require __DIR__ . '/config/account-linking.php');
+
 /* =========================================================
    POST ACTIONS
    ========================================================= */
@@ -611,125 +613,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
            master remains READ ONLY.
            ================================================= */
 
-        if ($action === 'add') {
-
-            if (accountLinkRateLimited()) {
-                $_SESSION['account_link_form_error'] = 'Too many unsuccessful verification attempts. Please wait before trying again.';
-                dashboardReturn('account-settings', $_SESSION['account_link_form_error'], 'error');
+        if (in_array($action, ['add', 'verify_link', 'restart_link'], true)) {
+            $result = $accountLinker->handle($userId, $_POST, dashboardCsrfToken());
+            if (!$result['ok']) {
+                $_SESSION['account_link_form_error'] = $result['message'];
             }
-
-            $accountCode = normalizePalecoAccCode((string) ($_POST['account_code'] ?? ''));
-            $meter = normalizePalecoMeterSerial((string) ($_POST['meter_number'] ?? ''));
-            $label = trim((string) ($_POST['label'] ?? ''));
-
-            if ($accountCode === null || $meter === null || mb_strlen($label) > 100) {
-                recordAccountLinkFailure();
-                $_SESSION['account_link_form_error'] = 'Enter a valid PALECO account code and meter serial number.';
-                dashboardReturn('account-settings', $_SESSION['account_link_form_error'], 'error');
-            }
-
-            /* Both normalized AcctCode and MeterSerial must match one read-only master record. */
-            $verify = $pdo->prepare(palecoAccountVerificationSql());
-            $verify->execute([
-                ':acct_code' => $accountCode,
-                ':meter_serial' => $meter,
-            ]);
-            $verifiedAccount = $verify->fetch(PDO::FETCH_ASSOC);
-
-            if (!$verifiedAccount) {
-                recordAccountLinkFailure();
-                $_SESSION['account_link_form_error'] = 'The account information could not be verified.';
-                dashboardReturn('account-settings', $_SESSION['account_link_form_error'], 'error');
-            }
-
-            $verifiedAcctNo = trim((string) ($verifiedAccount['AcctNo'] ?? ''));
-
-            if ($verifiedAcctNo === '' || !accountLinkAcquireLock($pdo, $verifiedAcctNo)) {
-                $_SESSION['account_link_form_error'] = 'Account linking is temporarily unavailable. Please try again.';
-                dashboardReturn('account-settings', $_SESSION['account_link_form_error'], 'error');
-            }
-
-            try {
-                $pdo->beginTransaction();
-
-                $lock = $pdo->prepare("
-                    SELECT id FROM mco_portal.users WHERE id = ? FOR UPDATE
-                ");
-                $lock->execute([$userId]);
-
-                /* This portal has no global AcctNo uniqueness constraint. Do not transfer or share links silently. */
-                $otherOwner = $pdo->prepare("
-                    SELECT user_id
-                    FROM mco_portal.paleco_accounts
-                    WHERE AcctNo = ?
-                      AND user_id <> ?
-                    LIMIT 1
-                    FOR UPDATE
-                ");
-                $otherOwner->execute([$verifiedAcctNo, $userId]);
-
-                if ($otherOwner->fetchColumn()) {
-                    $pdo->rollBack();
-                    accountLinkReleaseLock($pdo, $verifiedAcctNo);
-                    $_SESSION['account_link_form_error'] = 'The account information could not be verified.';
-                    dashboardReturn('account-settings', $_SESSION['account_link_form_error'], 'error');
-                }
-
-                $check = $pdo->prepare("
-                    SELECT id, status
-                    FROM mco_portal.paleco_accounts
-                    WHERE user_id = ? AND AcctNo = ?
-                    LIMIT 1
-                    FOR UPDATE
-                ");
-                $check->execute([$userId, $verifiedAcctNo]);
-                $existing = $check->fetch(PDO::FETCH_ASSOC);
-
-                if ($existing && ($existing['status'] ?? '') === 'active') {
-                    $pdo->rollBack();
-                    accountLinkReleaseLock($pdo, $verifiedAcctNo);
-                    $_SESSION['account_link_form_error'] = 'This account is already linked.';
-                    dashboardReturn('account-settings', $_SESSION['account_link_form_error'], 'error');
-                }
-
-                $count = $pdo->prepare("
-                    SELECT COUNT(*) FROM mco_portal.paleco_accounts
-                    WHERE user_id = ? AND status = 'active'
-                ");
-                $count->execute([$userId]);
-                $first = (int) $count->fetchColumn() === 0;
-
-                if ($existing) {
-                    $stmt = $pdo->prepare("
-                        UPDATE mco_portal.paleco_accounts
-                        SET account_nickname = ?, status = 'active', is_primary = ?, verified_at = NOW()
-                        WHERE id = ? AND user_id = ?
-                    ");
-                    $stmt->execute([$label !== '' ? $label : null, $first ? 1 : 0, $existing['id'], $userId]);
-                } else {
-                    $stmt = $pdo->prepare("
-                        INSERT INTO mco_portal.paleco_accounts
-                        (user_id, AcctNo, account_nickname, is_primary, status, verified_at)
-                        VALUES (?, ?, ?, ?, 'active', NOW())
-                    ");
-                    $stmt->execute([$userId, $verifiedAcctNo, $label !== '' ? $label : null, $first ? 1 : 0]);
-                }
-
-                $pdo->commit();
-            } finally {
-                if ($pdo->inTransaction()) {
-                    $pdo->rollBack();
-                }
-                accountLinkReleaseLock($pdo, $verifiedAcctNo);
-            }
-
-            clearAccountLinkFailures();
-
-            if ($first) {
-                $_SESSION['SelectedAcctNo'] = $verifiedAcctNo;
-            }
-
-            dashboardReturn('account-settings', 'PALECO account linked successfully.');
+            dashboardReturn('account-settings', $result['message'], $result['ok'] ? 'success' : 'error');
         }
 
         /* =================================================
@@ -1167,6 +1056,14 @@ unset($_SESSION['dashboard_flash']);
 
 $accountLinkFormError = $_SESSION['account_link_form_error'] ?? null;
 unset($_SESSION['account_link_form_error']);
+
+$accountLinkPending = null;
+try {
+    $accountLinkPending = $accountLinker->pending($userId);
+} catch (Throwable $e) {
+    error_log('Account linking: pending_state_unavailable');
+    $accountLinkFormError = 'Online account linking verification is unavailable. Please contact PALECO.';
+}
 
 $csrf = dashboardCsrfToken();
 
@@ -1722,8 +1619,7 @@ $csrf = dashboardCsrfToken();
                             text-slate-500
                         "
                     >
-                        Enter the account number and meter
-                        number shown on your PALECO bill.
+                        Verify your account and meter, then verify a billing month and amount from your PALECO statement.
                     </p>
 
 
@@ -1733,7 +1629,41 @@ $csrf = dashboardCsrfToken();
                         </div>
                     <?php endif; ?>
 
-                    <form method="post" class="mt-6 grid gap-4 md:grid-cols-3" onsubmit="const submit = this.querySelector('[data-link-submit]'); if (submit) { submit.disabled = true; submit.textContent = 'Linking account…'; }">
+                    <?php if ($accountLinkPending): ?>
+                    <p class="mt-4 text-sm font-semibold" role="status">Step 2 of 2: Billing Verification</p>
+                    <p id="link-billing-help" class="mt-2 text-sm text-slate-500">Select a billing month from your PALECO Statement of Account and enter the exact Total Bill Amount printed on that statement. Verification expires after 10 minutes.</p>
+                    <form method="post" class="mt-6 grid gap-4 sm:grid-cols-2" data-account-link-form data-loading-text="Verifying account…">
+                        <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrf) ?>">
+                        <input type="hidden" name="action" value="verify_link">
+                        <input type="hidden" name="challenge_id" value="<?= dashboardEscape($accountLinkPending['id']) ?>">
+                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            Billing Month
+                            <select name="bill_month" required aria-describedby="link-billing-help" class="mt-1.5 block w-full rounded-xl border border-slate-300 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+                                <option value="">Select a billing month</option>
+                                <?php foreach ($accountLinkPending['months'] as $linkMonth): ?>
+                                    <option value="<?= dashboardEscape($linkMonth) ?>"><?= dashboardEscape(palecoLinkMonthLabel($linkMonth)) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
+                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            Total Bill Amount (PHP)
+                            <input name="bill_amount" type="text" inputmode="decimal" maxlength="80" autocomplete="off" required placeholder="0.00" aria-describedby="link-billing-help" class="mt-1.5 block w-full rounded-xl border border-slate-300 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+                        </label>
+                        <div class="sm:col-span-2">
+                            <button data-link-submit type="submit" class="rounded-xl bg-paleco-700 px-5 py-2.5 text-sm font-semibold text-white focus:outline-none focus:ring-4 focus:ring-paleco-500/30 disabled:opacity-70">Verify and Link Account</button>
+                        </div>
+                    </form>
+                    <form method="post" class="mt-3" data-account-link-form data-loading-text="Restarting verification…">
+                        <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrf) ?>">
+                        <input type="hidden" name="action" value="restart_link">
+                        <button data-link-submit type="submit" class="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold disabled:opacity-70">Back</button>
+                    </form>
+                    <?php else: ?>
+                    <p class="mt-4 text-sm font-semibold" role="status">Step 1 of 2: Account Verification</p>
+                    <?php if (!$accountLinker->enabled()): ?>
+                        <p id="link-disabled-help" class="mt-2 text-sm text-slate-500" role="status">Online account linking is currently disabled. Continue is unavailable. Please contact PALECO customer support.</p>
+                    <?php endif; ?>
+                    <form method="post" class="mt-6 grid gap-4 md:grid-cols-3" data-account-link-form data-loading-text="Verifying account…">
                         <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrf) ?>">
                         <input type="hidden" name="action" value="add">
 
@@ -1755,10 +1685,11 @@ $csrf = dashboardCsrfToken();
                         </label>
 
                         <div class="flex flex-wrap gap-3 md:col-span-3">
-                            <button data-link-submit type="submit" class="rounded-xl bg-paleco-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-paleco-800 focus:outline-none focus:ring-4 focus:ring-paleco-500/30 disabled:cursor-not-allowed disabled:opacity-70">Link Account</button>
+                            <button data-link-submit type="submit" <?= !$accountLinker->enabled() ? 'disabled aria-describedby="link-disabled-help"' : '' ?> class="rounded-xl bg-paleco-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-paleco-800 focus:outline-none focus:ring-4 focus:ring-paleco-500/30 disabled:cursor-not-allowed disabled:opacity-70"><?= $accountLinker->enabled() ? 'Continue' : 'Linking unavailable' ?></button>
                             <a href="dashboard.php?page=account-settings" class="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-paleco-500/10 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Cancel</a>
                         </div>
                     </form>
+                    <?php endif; ?>
                 </section>
 
 
@@ -2771,6 +2702,7 @@ $csrf = dashboardCsrfToken();
 
 <script src="assets/js/theme.js"></script>
 <script src="assets/js/portal-shell.js"></script>
+<script src="assets/js/account-linking.js"></script>
 
 <script>
 
