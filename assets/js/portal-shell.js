@@ -40,6 +40,6 @@
     closeButton?.addEventListener('click', closeSidebar);
     backdrop?.addEventListener('click', closeSidebar);
     sidebar?.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeSidebar));
-    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeSidebar(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !document.querySelector('dialog[open]')) closeSidebar(); });
     window.addEventListener('resize', () => { if (isDesktop()) { document.body.classList.remove('overflow-hidden'); sidebar?.classList.add('-translate-x-full'); backdrop?.classList.add('hidden'); setCollapsed(localStorage.getItem(key) === 'true', false); } else { root.classList.remove('sidebar-collapsed'); } });
 })();

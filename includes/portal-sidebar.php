@@ -34,8 +34,9 @@ $portalInitial = strtoupper(substr(trim($portalUserDisplayName), 0, 1) ?: 'M');
             <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-paleco-100 text-sm font-bold text-paleco-800 dark:bg-paleco-900 dark:text-paleco-100" aria-hidden="true"><?= portalShellEscape($portalInitial) ?></span>
             <span class="portal-expanded-only min-w-0"><span class="block truncate text-sm font-semibold"><?= portalShellEscape($portalUserDisplayName) ?></span><?php if ($portalUserEmail !== ''): ?><span class="block truncate text-xs text-slate-500 dark:text-slate-400"><?= portalShellEscape($portalUserEmail) ?></span><?php endif; ?></span>
         </a>
-        <a href="logout.php" class="portal-signout-link mt-3" aria-label="Sign Out" title="Sign Out">
+        <button type="button" data-session-action="logout" class="portal-signout-link mt-3 w-full text-left" aria-label="Sign Out" title="Sign Out" aria-haspopup="dialog" aria-controls="session-action-dialog">
             <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5 shrink-0"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M14 5h5a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"/></svg><span class="portal-expanded-only">Sign Out</span>
-        </a>
+        </button>
     </div>
 </aside>
+<?php require __DIR__ . '/session-action-dialogs.php'; ?>

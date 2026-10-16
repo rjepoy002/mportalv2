@@ -1670,7 +1670,7 @@ $csrf = dashboardCsrfToken();
                         <div class="rounded-xl bg-slate-50 p-4">
                             <h3 class="font-semibold">Password</h3>
                             <p class="mt-1 text-sm text-slate-500">Request a secure password-reset link for your portal account.</p>
-                            <a href="forgot-password.php" class="mt-3 inline-block text-sm font-semibold text-paleco-700 hover:text-paleco-800">Reset password →</a>
+                            <button type="button" data-session-action="reset" aria-haspopup="dialog" aria-controls="session-action-dialog" class="mt-3 inline-block text-sm font-semibold text-paleco-700 hover:text-paleco-800">Reset password →</button>
                         </div>
                         <div class="rounded-xl bg-slate-50 p-4">
                             <h3 class="font-semibold">Appearance</h3>
