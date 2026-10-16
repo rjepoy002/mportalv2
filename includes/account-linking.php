@@ -116,16 +116,26 @@ final class PalecoAccountLinker
         $this->query('DELETE FROM mco_portal.account_link_challenges WHERE user_id = ?', [$userId]);
     }
 
-    /** Safe view model: never return account, meter, label, or expected amounts. */
+    /** Display data comes only from the authenticated user's verified challenge. */
     public function pending(int $userId): ?array
     {
         if (!$this->enabled() || $userId <= 0) return null;
-        $row = $this->query('SELECT challenge_id, allowed_months, expires_at FROM mco_portal.account_link_challenges WHERE user_id = ?', [$userId])->fetch();
+        $row = $this->query('SELECT c.challenge_id, c.allowed_months, c.expires_at,
+            c.friendly_label, m.AcctCode, m.Name, m.Address
+            FROM mco_portal.account_link_challenges c
+            INNER JOIN palecxzp_pal_db.master m ON m.AcctNo = c.AcctNo
+            WHERE c.user_id = ?', [$userId])->fetch();
         if (!$row || (int) $row['expires_at'] <= time()) return null;
         return [
             'id' => $row['challenge_id'],
             'months' => json_decode($row['allowed_months'], true, 512, JSON_THROW_ON_ERROR),
             'expires_at' => (int) $row['expires_at'],
+            'summary' => [
+                'account_number' => trim((string) $row['AcctCode']),
+                'description' => (string) ($row['friendly_label'] ?? ''),
+                'consumer_name' => (string) ($row['Name'] ?? ''),
+                'address' => (string) ($row['Address'] ?? ''),
+            ],
         ];
     }
 

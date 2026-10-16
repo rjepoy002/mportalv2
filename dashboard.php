@@ -89,6 +89,7 @@ if (!in_array($currentHost, $allowedHosts, true)) {
 
 require_once __DIR__ . '/includes/account-context.php';
 require_once __DIR__ . '/includes/account-linking.php';
+require_once __DIR__ . '/includes/account-unlinking.php';
 require_once __DIR__ . '/includes/billing-service.php';
 
 
@@ -331,20 +332,6 @@ function syncLegacyEbillsAccounts(
         ");
 
 
-        /*
-         * Restore inactive legacy-linked account.
-         */
-
-        $restore = $pdo->prepare("
-            UPDATE mco_portal.paleco_accounts
-            SET
-                status = 'active',
-                verified_at = NOW()
-            WHERE id = ?
-              AND user_id = ?
-        ");
-
-
         foreach ($legacyAccounts as $acctNo) {
 
             $acctNo = trim((string) $acctNo);
@@ -363,18 +350,7 @@ function syncLegacyEbillsAccounts(
             );
 
             if ($existing) {
-
-                if (
-                    ($existing['status'] ?? '')
-                    !== 'active'
-                ) {
-
-                    $restore->execute([
-                        $existing['id'],
-                        $userId
-                    ]);
-                }
-
+                // Archived links reflect a user's unlink choice. Relink manually.
                 continue;
             }
 
@@ -618,12 +594,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$result['ok']) {
                 $_SESSION['account_link_form_error'] = $result['message'];
             }
+            if (($_SERVER['HTTP_ACCEPT'] ?? '') === 'application/json') {
+                $csrf = dashboardCsrfToken();
+                $accountLinkPending = $accountLinker->pending($userId);
+                $accountLinkFormError = $result['ok'] ? null : $result['message'];
+                unset($_SESSION['account_link_form_error']);
+                $linked = $action === 'verify_link' && $result['ok'];
+                if ($linked) $_SESSION['dashboard_flash'] = ['message' => $result['message'], 'type' => 'success'];
+                ob_start();
+                require __DIR__ . '/includes/account-linking-form.php';
+                $html = ob_get_clean();
+                header('Content-Type: application/json; charset=utf-8');
+                header('Cache-Control: no-store, private');
+                echo json_encode(['ok' => $result['ok'], 'linked' => $linked, 'html' => $html]);
+                exit;
+            }
+            if (!$result['ok'] || $action !== 'verify_link') {
+                unset($_SESSION['dashboard_flash']);
+                header('Location: dashboard.php?page=account-settings#account-linking-panel');
+                exit;
+            }
             dashboardReturn('account-settings', $result['message'], $result['ok'] ? 'success' : 'error');
         }
 
         /* =================================================
            FRIENDLY LABEL
            ================================================= */
+
+        if ($action === 'unlink') {
+            if ($acctNo === '') {
+                dashboardReturn('account-settings', 'The account link is no longer available. Please refresh your linked accounts.');
+            }
+            unlinkPalecoAccount($pdo, $userId, $acctNo, (string) ($_POST['csrf_token'] ?? ''), dashboardCsrfToken());
+            if (($_SESSION['SelectedAcctNo'] ?? '') === $acctNo) unset($_SESSION['SelectedAcctNo']);
+            foreach ($_SESSION['dashboard_account_selection_tokens'] ?? [] as $selectionToken => $selectedAcct) {
+                if ($selectedAcct === $acctNo) unset($_SESSION['dashboard_account_selection_tokens'][$selectionToken]);
+            }
+            dashboardReturn('account-settings', 'PALECO account unlinked from your profile.');
+        }
 
         if ($action === 'save_label' || $action === 'remove_label') {
             $isRemoval = $action === 'remove_label';
@@ -1331,7 +1339,7 @@ $csrf = dashboardCsrfToken();
                     >
 
                         <h3 class="font-semibold">
-                            No linked accounts
+                            No Linked PALECO Account
                         </h3>
 
                         <p
@@ -1341,8 +1349,9 @@ $csrf = dashboardCsrfToken();
                                 text-slate-500
                             "
                         >
-                            Add your PALECO account below.
+                            You currently have no PALECO electric service account linked to your portal profile.
                         </p>
+                        <a href="#link-paleco-account" class="mt-4 inline-block rounded-xl bg-paleco-700 px-4 py-2 text-sm font-semibold text-white">Link PALECO Account</a>
 
                     </div>
 
@@ -1542,6 +1551,8 @@ $csrf = dashboardCsrfToken();
                             </div>
 
 
+                            <button type="button" data-unlink-open data-account-token="<?= dashboardEscape($accountSelectionTokens[$account['AcctNo']] ?? '') ?>" data-account-number="<?= dashboardEscape(trim((string) ($account['AcctCode'] ?? '')) ?: 'Account code unavailable') ?>" class="mt-4 rounded-xl border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-500/20 dark:text-red-300" aria-haspopup="dialog" aria-controls="unlink-account-dialog">Unlink Account</button>
+
                             <!-- Friendly label -->
                             <?php $savedLabel = trim((string) ($account['account_nickname'] ?? '')); ?>
                             <form method="post" class="mt-5 border-t border-slate-100 pt-4 dark:border-slate-800" data-friendly-label-form data-saved-label="<?= dashboardEscape($savedLabel) ?>">
@@ -1579,118 +1590,24 @@ $csrf = dashboardCsrfToken();
                 </div>
                 <!-- Add account -->
 
-                <section
-                    class="
-                        rounded-2xl
-                        border border-slate-200
-                        bg-white
-                        p-5
-                        shadow-card
-                        sm:p-6
-                    "
-                >
-
-                    <p
-                        class="
-                            text-xs
-                            font-bold
-                            uppercase
-                            tracking-[.14em]
-                            text-paleco-700
-                        "
-                    >
-                        Add Account
-                    </p>
-
-                    <h2
-                        class="
-                            mt-1
-                            text-xl
-                            font-bold
-                        "
-                    >
-                        Link another PALECO account
-                    </h2>
-
-                    <p
-                        class="
-                            mt-1
-                            text-sm
-                            text-slate-500
-                        "
-                    >
-                        Verify your account and meter, then verify a billing month and amount from your PALECO statement.
-                    </p>
-
-
-                    <?php if ($accountLinkFormError): ?>
-                        <div class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300" role="alert">
-                            <?= dashboardEscape($accountLinkFormError) ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if ($accountLinkPending): ?>
-                    <p class="mt-4 text-sm font-semibold" role="status">Step 2 of 2: Billing Verification</p>
-                    <p id="link-billing-help" class="mt-2 text-sm text-slate-500">Select a billing month from your PALECO Statement of Account and enter the exact Total Bill Amount printed on that statement. Verification expires after 10 minutes.</p>
-                    <form method="post" class="mt-6 grid gap-4 sm:grid-cols-2" data-account-link-form data-loading-text="Verifying account…">
+                <dialog id="unlink-account-dialog" aria-labelledby="unlink-account-title" aria-describedby="unlink-account-description" class="w-[calc(100%_-_2rem)] max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl backdrop:bg-slate-950/50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+                    <h2 id="unlink-account-title" class="text-xl font-bold">Unlink PALECO Account?</h2>
+                    <div id="unlink-account-description" class="mt-3 space-y-3 text-sm leading-6">
+                        <p>Are you sure you want to unlink PALECO account <strong data-unlink-account-number></strong> from your MPortalV2 profile?</p>
+                        <p>This action will remove the account from your portal profile. Your official PALECO account and billing records will remain unchanged. You can link the account again later.</p>
+                    </div>
+                    <form method="post" class="mt-6 flex flex-wrap justify-end gap-3" data-unlink-form>
                         <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrf) ?>">
-                        <input type="hidden" name="action" value="verify_link">
-                        <input type="hidden" name="challenge_id" value="<?= dashboardEscape($accountLinkPending['id']) ?>">
-                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Billing Month
-                            <select name="bill_month" required aria-describedby="link-billing-help" class="mt-1.5 block w-full rounded-xl border border-slate-300 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
-                                <option value="">Select a billing month</option>
-                                <?php foreach ($accountLinkPending['months'] as $linkMonth): ?>
-                                    <option value="<?= dashboardEscape($linkMonth) ?>"><?= dashboardEscape(palecoLinkMonthLabel($linkMonth)) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </label>
-                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Total Bill Amount (PHP)
-                            <input name="bill_amount" type="text" inputmode="decimal" maxlength="80" autocomplete="off" required placeholder="0.00" aria-describedby="link-billing-help" class="mt-1.5 block w-full rounded-xl border border-slate-300 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
-                        </label>
-                        <div class="sm:col-span-2">
-                            <button data-link-submit type="submit" class="rounded-xl bg-paleco-700 px-5 py-2.5 text-sm font-semibold text-white focus:outline-none focus:ring-4 focus:ring-paleco-500/30 disabled:opacity-70">Verify and Link Account</button>
-                        </div>
+                        <input type="hidden" name="action" value="unlink">
+                        <input type="hidden" name="account_token" value="" data-unlink-token>
+                        <button type="button" data-unlink-cancel autofocus class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">Cancel</button>
+                        <button type="submit" data-unlink-confirm class="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-70">Confirm Unlink</button>
                     </form>
-                    <form method="post" class="mt-3" data-account-link-form data-loading-text="Restarting verification…">
-                        <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrf) ?>">
-                        <input type="hidden" name="action" value="restart_link">
-                        <button data-link-submit type="submit" class="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold disabled:opacity-70">Back</button>
-                    </form>
-                    <?php else: ?>
-                    <p class="mt-4 text-sm font-semibold" role="status">Step 1 of 2: Account Verification</p>
-                    <?php if (!$accountLinker->enabled()): ?>
-                        <p id="link-disabled-help" class="mt-2 text-sm text-slate-500" role="status">Online account linking is currently disabled. Continue is unavailable. Please contact PALECO customer support.</p>
-                    <?php endif; ?>
-                    <form method="post" class="mt-6 grid gap-4 md:grid-cols-3" data-account-link-form data-loading-text="Verifying account…">
-                        <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrf) ?>">
-                        <input type="hidden" name="action" value="add">
+                </dialog>
 
-                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            PALECO Account Code
-                            <input name="account_code" maxlength="12" required autocomplete="off" inputmode="text" placeholder="XX-XXXX-XXXX" aria-describedby="account-code-help" class="mt-1.5 block w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-paleco-500 focus:ring-4 focus:ring-paleco-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
-                            <span id="account-code-help" class="mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400">Enter your PALECO account code.</span>
-                        </label>
+                <div id="link-paleco-account"></div>
 
-                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Meter Serial Number
-                            <input name="meter_number" maxlength="20" required autocomplete="off" placeholder="Enter meter serial number" aria-describedby="meter-number-help" class="mt-1.5 block w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-paleco-500 focus:ring-4 focus:ring-paleco-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
-                            <span id="meter-number-help" class="mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400">Enter the meter serial number registered to your account.</span>
-                        </label>
-
-                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Friendly label <span class="font-normal text-slate-400">(optional)</span>
-                            <input name="label" maxlength="100" placeholder="e.g. Home" class="mt-1.5 block w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-paleco-500 focus:ring-4 focus:ring-paleco-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
-                        </label>
-
-                        <div class="flex flex-wrap gap-3 md:col-span-3">
-                            <button data-link-submit type="submit" <?= !$accountLinker->enabled() ? 'disabled aria-describedby="link-disabled-help"' : '' ?> class="rounded-xl bg-paleco-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-paleco-800 focus:outline-none focus:ring-4 focus:ring-paleco-500/30 disabled:cursor-not-allowed disabled:opacity-70"><?= $accountLinker->enabled() ? 'Continue' : 'Linking unavailable' ?></button>
-                            <a href="dashboard.php?page=account-settings" class="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-paleco-500/10 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Cancel</a>
-                        </div>
-                    </form>
-                    <?php endif; ?>
-                </section>
+                <?php require __DIR__ . '/includes/account-linking-form.php'; ?>
 
 
             <!-- =================================================
@@ -2703,6 +2620,7 @@ $csrf = dashboardCsrfToken();
 <script src="assets/js/theme.js"></script>
 <script src="assets/js/portal-shell.js"></script>
 <script src="assets/js/account-linking.js"></script>
+<script src="assets/js/account-unlinking.js"></script>
 
 <script>
 

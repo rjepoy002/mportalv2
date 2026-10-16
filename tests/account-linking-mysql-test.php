@@ -1,6 +1,9 @@
 <?php
 
 require_once __DIR__ . '/../includes/account-linking.php';
+require_once __DIR__ . '/../includes/account-unlinking.php';
+require_once __DIR__ . '/../includes/billing-service.php';
+require_once __DIR__ . '/../includes/soa-service.php';
 
 // Opt-in, isolated fixtures only. Never point this suite at application databases.
 $dsn = getenv('ACCOUNT_LINK_TEST_DSN');
@@ -36,6 +39,11 @@ function linkTestConfig(): array
     $config = require __DIR__ . '/../config/account-linking.php';
     $config['enabled'] = true; // Synthetic tests only; does not change deployment flags.
     return $config;
+}
+
+function dashboardEscape($value): string
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
 $pdo = linkTestPdo();
@@ -82,7 +90,7 @@ function linkReset(): void
 {
     global $pdo;
     foreach (['account_link_challenges', 'account_link_limits', 'paleco_accounts', 'billhistory', 'master'] as $table) $pdo->exec('DELETE FROM ' . $table);
-    $pdo->exec("INSERT INTO master VALUES ('FIXTURE-A','12-3456-7890','00123A','Synthetic account','A'), ('FIXTURE-B','98-7654-3210','OTHER','Synthetic account','A')");
+    $pdo->exec("INSERT INTO master (AcctNo,AcctCode,MeterSerial,Name,Status) VALUES ('FIXTURE-A','12-3456-7890','00123A','Synthetic account','A'), ('FIXTURE-B','98-7654-3210','OTHER','Synthetic account','A')");
     $pdo->exec("INSERT INTO billhistory VALUES
         ('one','FIXTURE-A','202609',1250.00),
         ('duplicate','FIXTURE-A','202609',1250.00),
@@ -111,7 +119,7 @@ try {
     $pdo->exec('CREATE TABLE users (id BIGINT UNSIGNED PRIMARY KEY) ENGINE=InnoDB');
     $created[] = 'users';
     $pdo->exec('INSERT INTO users VALUES (1),(2),(3)');
-    $pdo->exec('CREATE TABLE master (AcctNo VARCHAR(15) PRIMARY KEY, AcctCode VARCHAR(12), MeterSerial VARCHAR(20), Name VARCHAR(50), Status CHAR(1)) ENGINE=InnoDB');
+    $pdo->exec("CREATE TABLE master (AcctNo VARCHAR(15) PRIMARY KEY, AcctCode VARCHAR(12), MeterSerial VARCHAR(20), Name VARCHAR(50), Status CHAR(1), Address VARCHAR(255) DEFAULT 'Synthetic location') ENGINE=InnoDB");
     $created[] = 'master';
     // Reduced fixtures reproduce the exact types used by the verification queries.
     $pdo->exec('CREATE TABLE billhistory (TransID VARCHAR(255) PRIMARY KEY, AcctNo VARCHAR(15), BillMonth VARCHAR(6), TotalBill DECIMAL(19,2), KEY (AcctNo,BillMonth)) ENGINE=InnoDB');
@@ -139,9 +147,22 @@ try {
     linkCheck((int) $pdo->query('SELECT COUNT(*) FROM paleco_accounts')->fetchColumn() === 0, 'Step 1 created a permanent link.');
     $pending = $service->pending(1);
     linkCheck($pending['months'] === ['202609','202607','202604'], 'Latest distinct valid months incorrect.');
-    linkCheck(array_keys($pending) === ['id','months','expires_at'], 'Pending response contains private fields.');
+    linkCheck(array_keys($pending) === ['id','months','expires_at','summary'], 'Pending response contains private fields.');
+    linkCheck($pending['summary'] === ['account_number'=>'12-3456-7890','description'=>'My Home','consumer_name'=>'Synthetic account','address'=>'Synthetic location'], 'Verified account summary mismatch.');
     $wire = json_encode($pending);
     foreach (['1250.00', '1450.00', 'FIXTURE-A', '00123A', 'TotalBill', 'TransID', 'revision'] as $secret) linkCheck(!str_contains($wire, $secret), 'Sensitive data leaked in pending response.');
+    $accountLinkPending=$pending;
+    $accountLinker=$service;
+    $accountLinkFormError=null;
+    $accountLinkPending['summary']['consumer_name']='<img src=x onerror=alert(1)>';
+    ob_start();require __DIR__.'/../includes/account-linking-form.php';$view=ob_get_clean();
+    linkCheck(str_contains($view,'id="account-linking-panel"'),'Panel is missing its navigation target.');
+    linkCheck(str_contains($view,'12-3456-7890') && str_contains($view,'Synthetic location'),'Verified summary absent from Step 2.');
+    linkCheck(str_contains($view,'&lt;img') && !str_contains($view,'<img src=x'),'Summary was not HTML escaped.');
+    linkCheck(!str_contains($view,'FIXTURE-A') && !str_contains($view,'1250.00') && !str_contains($view,'1450.00'),'Internal identifier or expected bill amount leaked in view.');
+    linkCheck(str_contains($view,'Account found. Please complete billing verification to link this account.') && !str_contains($view,'linked successfully'),'Step 1 displayed premature linking success.');
+    linkStart(2,['account_code'=>'98-7654-3210','meter_number'=>'OTHER','label'=>'Office']);
+    linkCheck($service->pending(2)['summary']['account_number']==='98-7654-3210' && $service->pending(1)['summary']['account_number']==='12-3456-7890','Summary substituted another authenticated user account.');
 
     // Every duplicate amount and all three periods are accepted independently.
     foreach ([['1250.00','202609'],['1450.00','202609'],['₱1,250.00','202609'],['72.10','202607'],['0','202604']] as [$amount,$month]) {
@@ -220,6 +241,41 @@ try {
     for($i=0;$i<20;$i++) linkStart(1,['meter_number'=>'WRONG']);
     linkCheck(!linkStart()['ok'],'Step 1 user throttle bypassed.');
     linkCheck(!linkStart(2)['ok'],'Step 1 account throttle bypassed.');
+
+    // Unlink archives this association only; archived links relink through verification.
+    linkReset();linkStart();linkFinish();
+    $pdo->exec("INSERT INTO paleco_accounts (user_id,AcctNo,account_nickname,is_primary,status) VALUES (1,'FIXTURE-B','Other',0,'active'),(2,'FIXTURE-A','Shared',1,'active')");
+    $billHash=hash('sha256',json_encode($pdo->query('SELECT * FROM billhistory ORDER BY TransID')->fetchAll()));
+    foreach ([[0,'FIXTURE-A',$csrf],[3,'FIXTURE-A',$csrf],[1,'FIXTURE-A','bad']] as [$user,$account,$token]) {
+        $rejected=false;
+        try { unlinkPalecoAccount($pdo,$user,$account,$token,$csrf); } catch(DomainException $e) { $rejected=true; }
+        linkCheck($rejected,'Unauthenticated, foreign or CSRF-invalid unlink accepted.');
+    }
+    linkStart();
+    linkCheck(unlinkPalecoAccount($pdo,1,'FIXTURE-A',$csrf,$csrf),'Unlink failed.');
+    linkCheck($service->pending(1)===null,'Pre-unlink verification challenge survived.');
+    linkCheck($pdo->query("SELECT status FROM paleco_accounts WHERE user_id=1 AND AcctNo='FIXTURE-A'")->fetchColumn()==='archived','Unlinked association remained active.');
+    linkCheck($pdo->query("SELECT status FROM paleco_accounts WHERE user_id=2 AND AcctNo='FIXTURE-A'")->fetchColumn()==='active','Other portal user association changed.');
+    linkCheck((int)$pdo->query("SELECT is_primary FROM paleco_accounts WHERE user_id=1 AND AcctNo='FIXTURE-B'")->fetchColumn()===1,'Remaining account not promoted.');
+    linkCheck(!unlinkPalecoAccount($pdo,1,'FIXTURE-A',$csrf,$csrf),'Repeated unlink was not idempotent.');
+    foreach ([fn()=>getUnpaidBills($pdo,1,'FIXTURE-A'),fn()=>soaAuthorizedSelectedAccount($pdo,1,'FIXTURE-A'),fn()=>soaLatestBillMonth($pdo,1,'FIXTURE-A')] as $read) {
+        $rejected=false;try{$read();}catch(DomainException $e){$rejected=true;}
+        linkCheck($rejected,'Unlinked account retained billing/SOA access.');
+    }
+    linkCheck(unlinkPalecoAccount($pdo,1,'FIXTURE-B',$csrf,$csrf),'Final account unlink failed.');
+    linkCheck((int)$pdo->query("SELECT COUNT(*) FROM paleco_accounts WHERE user_id=1 AND status='active'")->fetchColumn()===0,'Final link remained active.');
+    linkCheck((int)$pdo->query('SELECT COUNT(*) FROM users WHERE id=1')->fetchColumn()===1,'Portal profile removed.');
+    linkStart();linkCheck(linkFinish()['ok'],'Unlinked account could not relink with verification.');
+    linkCheck(hash('sha256',json_encode($pdo->query('SELECT * FROM billhistory ORDER BY TransID')->fetchAll()))===$billHash,'Official billing fixture changed during unlink.');
+    // A database failure must roll back the archive and primary-account changes.
+    $pdo->exec('RENAME TABLE account_link_challenges TO temporarily_unavailable_challenges');
+    try {
+        $failed=false;
+        try{unlinkPalecoAccount($pdo,1,'FIXTURE-A',$csrf,$csrf);}catch(PDOException $e){$failed=true;}
+        linkCheck($failed,'Database failure was not surfaced safely.');
+        linkCheck($pdo->query("SELECT status FROM paleco_accounts WHERE user_id=1 AND AcctNo='FIXTURE-A'")->fetchColumn()==='active','Failed unlink did not roll back.');
+    } finally {$pdo->exec('RENAME TABLE temporarily_unavailable_challenges TO account_link_challenges');}
+    linkCheck(maskPalecoAccountNumber('12-3456-7890')==='********7890','Confirmation account number not masked.');
 
     // Two independent PHP processes submit the same live challenge together.
     linkReset();linkStart();
