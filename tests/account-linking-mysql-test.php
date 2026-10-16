@@ -186,6 +186,7 @@ try {
     foreach ([['1250.00','202609'],['1450.00','202609'],['₱1,250.00','202609'],['72.10','202607'],['0','202604']] as [$amount,$month]) {
         linkReset(); linkStart();
         linkCheck(linkFinish($amount,$month)['ok'], 'Matching duplicate or selected month rejected.');
+        linkCheck($service->linkedAccountForEnrollment()==='FIXTURE-A','Optional enrollment account was not bound to the committed link.');
         linkCheck($service->pending(1) === null, 'Successful challenge not consumed.');
         linkCheck($pdo->query('SELECT account_nickname FROM paleco_accounts')->fetchColumn() === 'My Home', 'Friendly label lost.');
     }

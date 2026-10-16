@@ -68,7 +68,15 @@ if (
     ($_POST['action'] ?? '') === 'register'
 ) {
 
-    $name = trim($_POST['name'] ?? '');
+    require_once __DIR__ . '/includes/ebills-enrollment.php';
+    $structuredProfile = [];
+    try {
+        $structuredProfile = portalProfileValues($_POST);
+        $name = implode(' ', array_filter([$structuredProfile['first_name'], $structuredProfile['middle_name'], $structuredProfile['last_name'], $structuredProfile['extension_name']]));
+    } catch (DomainException $e) {
+        $errors[] = $e->getMessage();
+        $name = '';
+    }
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
@@ -80,9 +88,9 @@ if (
 
     if ($name === '') {
 
-        $errors[] = 'Please enter your full name.';
+        $errors[] = 'Please enter your first and last names.';
 
-    } elseif (strlen($name) > 150) {
+    } elseif (mb_strlen($name) > 150) {
 
         $errors[] = 'Your name is too long.';
     }
@@ -236,6 +244,7 @@ if (
             // temporarily in the session
 
             $_SESSION['registration'] = [
+                ...$structuredProfile,
                 'name' => $name,
                 'email' => $email,
                 'password_hash' => password_hash(
@@ -687,17 +696,21 @@ if (
                         email,
                         name,
                         password_hash,
+                        first_name, last_name, middle_name, extension_name, contact_number,
                         email_verified_at,
                         status
                     )
                 VALUES
-                    (?, ?, ?, NOW(), 'active')
+                    (?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'active')
             ");
 
             $stmt->execute([
                 $registration['email'],
                 $registration['name'],
-                $registration['password_hash']
+                $registration['password_hash'],
+                $registration['first_name'] ?? null, $registration['last_name'] ?? null,
+                $registration['middle_name'] ?? null, $registration['extension_name'] ?? null,
+                $registration['contact_number'] ?? null
             ]);
 
 
@@ -987,48 +1000,14 @@ if (
                             value="register"
                         >
 
-                        <!-- FULL NAME -->
+                        <!-- STRUCTURED PROFILE NAME -->
+                        <div id="nameError" class="field-error" aria-live="polite"></div>
 
-                        <div class="form-group">
-
-                            <label
-                                for="name"
-                                class="form-label"
-                            >
-                                Full Name
-                            </label>
-
-
-                            <div class="input-wrapper">
-
-                                <i class="bi bi-person"></i>
-
-                                <input
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    class="form-control"
-                                    placeholder="Enter your full name"
-                                    autocomplete="name"
-                                    maxlength="100"
-                                    value="<?= htmlspecialchars($_POST["name"] ?? "") ?>"
-                                    required
-                                >
-
-                            </div>
-
-
-                            <div
-                                class="field-error"
-                                id="nameError"
-                            ></div>
-
-                        </div>
-
-
-
-                        <!-- EMAIL -->
-
+                        <div class="form-group"><label class="form-label" for="name">First Name</label><div class="input-wrapper"><input class="form-control" id="name" name="first_name" maxlength="25" required  value="<?= htmlspecialchars(is_string($_POST['first_name'] ?? null) ? $_POST['first_name'] : '', ENT_QUOTES, 'UTF-8') ?>"></div></div>
+                        <div class="form-group"><label class="form-label" for="last_name">Last Name</label><div class="input-wrapper"><input class="form-control" id="last_name" name="last_name" maxlength="25" required  value="<?= htmlspecialchars(is_string($_POST['last_name'] ?? null) ? $_POST['last_name'] : '', ENT_QUOTES, 'UTF-8') ?>"></div></div>
+                        <div class="form-group"><label class="form-label" for="middle_name">Middle Name (optional)</label><div class="input-wrapper"><input class="form-control" id="middle_name" name="middle_name" maxlength="25"   value="<?= htmlspecialchars(is_string($_POST['middle_name'] ?? null) ? $_POST['middle_name'] : '', ENT_QUOTES, 'UTF-8') ?>"></div></div>
+                        <div class="form-group"><label class="form-label" for="extension_name">Name Extension (optional)</label><div class="input-wrapper"><input class="form-control" id="extension_name" name="extension_name" maxlength="25"   value="<?= htmlspecialchars(is_string($_POST['extension_name'] ?? null) ? $_POST['extension_name'] : '', ENT_QUOTES, 'UTF-8') ?>"></div></div>
+                        <div class="form-group"><label class="form-label" for="contact_number">Contact Number (optional)</label><div class="input-wrapper"><input class="form-control" id="contact_number" name="contact_number" maxlength="11"  inputmode="numeric" pattern="09[0-9]{9}" placeholder="09XXXXXXXXX" value="<?= htmlspecialchars(is_string($_POST['contact_number'] ?? null) ? $_POST['contact_number'] : '', ENT_QUOTES, 'UTF-8') ?>"></div></div>
                         <div class="form-group">
 
                             <label

@@ -28,7 +28,7 @@ const vm = require('node:vm');
         {ok:true,linked:false,html:'step2'},
         {ok:false,linked:false,html:'error-step1'},
         {ok:true,linked:false,html:'step2'},
-        {ok:true,linked:true,html:'step1'}
+        {ok:true,linked:true,optional_step:true,html:'step3'}
     ];
     vm.runInNewContext(fs.readFileSync(require.resolve('../assets/js/account-linking.js'),'utf8'),{
         document:{querySelectorAll:()=>forms,getElementById:()=>panel},
@@ -47,7 +47,8 @@ const vm = require('node:vm');
     await submit();await submit();assert.equal(stage,'error-step1','Expired challenge did not return to details.');
     assert.equal(navigated.length,0,'Intermediate or error response triggered final navigation.');
     await submit();await submit();
-    assert.deepEqual(navigated,['dashboard.php?page=account-settings']);
+    assert.deepEqual(navigated,[],'Optional enrollment caused an unexpected full-page reload.');
+    assert.equal(stage,'step3','Committed linking did not transition to optional enrollment.');
     assert.equal(results.length,0);
     console.log('Account linking navigation tests passed (Step 1, errors, Back, expiry and final success).');
 })().catch(error=>{console.error(error);process.exitCode=1;});

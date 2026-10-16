@@ -88,6 +88,11 @@ final class PalecoAccountLinker
     private const UNAVAILABLE = 'Online account linking verification is unavailable. Please contact PALECO customer support.';
 
     private ?string $notificationEvent = null;
+    public function linkedAccountForEnrollment(): ?string
+    {
+        return $this->enrollmentAccount;
+    }
+    private ?string $enrollmentAccount = null;
     private $notificationTransport;
     public function __construct(private PDO $pdo, private array $config, ?callable $notificationTransport = null)
     {
@@ -179,6 +184,7 @@ final class PalecoAccountLinker
     public function handle(int $userId, array $input, string $csrf): array
     {
         $this->notificationEvent = null;
+        $this->enrollmentAccount = null;
         if ($userId <= 0) return $this->result(false, 'Please sign in to continue.');
         if ($csrf === '' || !is_string($input['csrf_token'] ?? null) || !hash_equals($csrf, $input['csrf_token'])) {
             $this->audit($userId, 'csrf_rejected');
@@ -320,6 +326,7 @@ final class PalecoAccountLinker
         }
         $this->audit($userId, 'linked');
         $this->notificationEvent = queueAccountNotification($this->pdo, $userId, $row['AcctNo'], 'linked');
+        $this->enrollmentAccount = $row['AcctNo'];
         return $this->result(true, 'PALECO account linked successfully.');
     }
 }

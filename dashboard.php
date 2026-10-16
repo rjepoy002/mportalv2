@@ -90,6 +90,7 @@ if (!in_array($currentHost, $allowedHosts, true)) {
 require_once __DIR__ . '/includes/account-context.php';
 require_once __DIR__ . '/includes/account-linking.php';
 require_once __DIR__ . '/includes/account-unlinking.php';
+require_once __DIR__ . '/includes/ebills-enrollment.php';
 require_once __DIR__ . '/includes/billing-service.php';
 
 
@@ -498,6 +499,7 @@ $isDevelopmentMode = in_array(
 
 
 $accountLinker = new PalecoAccountLinker($pdo, require __DIR__ . '/config/account-linking.php');
+$ebills = new EBillsEnrollment($pdo);
 
 /* =========================================================
    POST ACTIONS
@@ -592,8 +594,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
            master remains READ ONLY.
            ================================================= */
 
+        if (in_array($action, ['save_profile','ebills_details','ebills_accept_terms','ebills_enroll','finish_ebills'],true)) {
+            try {
+                if ($action === 'finish_ebills') {
+                    unset($_SESSION['ebills_step3_acct']);
+                    header('Location: dashboard.php?page=account-settings'); exit;
+                }
+                if ($action === 'save_profile') {
+                    $ebills->saveProfile($userId,$_POST,dashboardCsrfToken());
+                    dashboardReturn('account-settings','Profile information saved and confirmed.');
+                }
+                if ($action === 'ebills_details') {
+                    $response=['ok'=>true,'details'=>$ebills->details($userId,$acctNo)];
+                } elseif ($action === 'ebills_accept_terms') {
+                    $ebills->acceptTerms($userId,$acctNo,$_POST,dashboardCsrfToken());
+                    $response=['ok'=>true];
+                } else {
+                    $created=$ebills->enroll($userId,$acctNo,$_POST,dashboardCsrfToken());
+                    $response=['ok'=>true,'created'=>$created,'message'=>$created ? 'Successfully Enrolled in eBills. Your PALECO account has been enrolled in eBills. Future Statements of Account will be sent to your registered email address through PALECO\'s billing system.' : 'Already Enrolled in eBills. This PALECO account is already registered for eBills.'];
+                }
+            } catch (DomainException $e) { $response=['ok'=>false,'message'=>$e->getMessage()]; }
+              catch (Throwable $e) { error_log('eBills profile/enrollment operation unavailable.'); $response=['ok'=>false,'message'=>'We could not complete that request. Your linked account is unchanged. Please try again.']; }
+            if (($_SERVER['HTTP_ACCEPT']??'')!=='application/json') dashboardReturn('account-settings',$response['message'],$response['ok']?'success':'error');
+            header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store, private');
+            if(!$response['ok'])http_response_code(400);
+            echo json_encode($response);exit;
+        }
+
         if (in_array($action, ['add', 'verify_link', 'restart_link'], true)) {
             $result = $accountLinker->handle($userId, $_POST, dashboardCsrfToken());
+            if($action==='verify_link'&&$result['ok'])$_SESSION['ebills_step3_acct']=$accountLinker->linkedAccountForEnrollment();
+            elseif($action==='add'||$action==='restart_link')unset($_SESSION['ebills_step3_acct']);
             if (!$result['ok']) {
                 $_SESSION['account_link_form_error'] = $result['message'];
             }
@@ -603,13 +634,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $accountLinkFormError = $result['ok'] ? null : $result['message'];
                 unset($_SESSION['account_link_form_error']);
                 $linked = $action === 'verify_link' && $result['ok'];
-                if ($linked) $_SESSION['dashboard_flash'] = ['message' => $result['message'], 'type' => 'success'];
+                $ebillsStep3=prepareEBillsStep3($pdo,$userId,$_SESSION['ebills_step3_acct']??null);
+                unset($_SESSION['dashboard_flash']);
                 ob_start();
+                if($ebillsStep3)require __DIR__.'/includes/ebills-step3.php';
+                else
                 require __DIR__ . '/includes/account-linking-form.php';
                 $html = ob_get_clean();
                 header('Content-Type: application/json; charset=utf-8');
                 header('Cache-Control: no-store, private');
-                echo json_encode(['ok' => $result['ok'], 'linked' => $linked, 'html' => $html]);
+                echo json_encode(['ok' => $result['ok'], 'linked' => $linked, 'optional_step' => (bool)$ebillsStep3, 'html' => $html]);
                 exit;
             }
             if (!$result['ok'] || $action !== 'verify_link') {
@@ -617,7 +651,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: dashboard.php?page=account-settings#account-linking-panel');
                 exit;
             }
-            dashboardReturn('account-settings', $result['message'], $result['ok'] ? 'success' : 'error');
+            unset($_SESSION['dashboard_flash']);
+            header('Location: dashboard.php?page=account-settings#account-linking-panel');exit;
         }
 
         /* =================================================
@@ -838,6 +873,10 @@ $linkedStmt->execute([$userId]);
 $linkedAccounts = $linkedStmt->fetchAll(
     PDO::FETCH_ASSOC
 );
+$ebillsStatus = null;
+try { $ebillsStatus = $ebills->statuses($linkedAccounts); } catch (Throwable $e) { error_log('eBills status lookup unavailable.'); }
+$portalProfile = $ebills->profile($userId);
+
 
 
 /*
@@ -1077,6 +1116,7 @@ try {
 }
 
 $csrf = dashboardCsrfToken();
+$ebillsStep3=prepareEBillsStep3($pdo,$userId,$_SESSION['ebills_step3_acct']??null);
 
 ?>
 <!doctype html>
@@ -1556,6 +1596,17 @@ $csrf = dashboardCsrfToken();
 
                             <button type="button" data-unlink-open data-account-token="<?= dashboardEscape($accountSelectionTokens[$account['AcctNo']] ?? '') ?>" data-account-number="<?= dashboardEscape(trim((string) ($account['AcctCode'] ?? '')) ?: 'Account code unavailable') ?>" class="mt-4 rounded-xl border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-500/20 dark:text-red-300" aria-haspopup="dialog" aria-controls="unlink-account-dialog">Unlink Account</button>
 
+                            <?php $enrollmentCode=trim((string)($account['AcctCode']??'')); ?>
+                            <div class="mt-3">
+                            <?php if($ebillsStatus===null||$enrollmentCode===''): ?>
+                                <span class="text-sm text-slate-500">eBills status unavailable</span>
+                            <?php elseif(isset($ebillsStatus[$enrollmentCode])): ?>
+                                <span class="rounded-lg bg-green-50 px-3 py-2 text-sm font-semibold text-green-700">eBills Enrolled</span>
+                            <?php else: ?>
+                                <button type="button" data-ebills-open data-ebills-code="<?= dashboardEscape($enrollmentCode) ?>" data-account-token="<?= dashboardEscape($accountSelectionTokens[$account['AcctNo']]??'') ?>" aria-haspopup="dialog" aria-controls="ebills-dialog" class="rounded-xl border border-paleco-300 px-3 py-2 text-sm font-semibold text-paleco-700 dark:text-paleco-200">Register for eBills</button>
+                            <?php endif; ?>
+                            </div>
+
                             <!-- Friendly label -->
                             <?php $savedLabel = trim((string) ($account['account_nickname'] ?? '')); ?>
                             <form method="post" class="mt-5 border-t border-slate-100 pt-4 dark:border-slate-800" data-friendly-label-form data-saved-label="<?= dashboardEscape($savedLabel) ?>">
@@ -1610,7 +1661,7 @@ $csrf = dashboardCsrfToken();
 
                 <div id="link-paleco-account"></div>
 
-                <?php require __DIR__ . '/includes/account-linking-form.php'; ?>
+                <?php if($ebillsStep3) require __DIR__.'/includes/ebills-step3.php'; else require __DIR__ . '/includes/account-linking-form.php'; ?>
 
 
             <!-- =================================================
@@ -1664,6 +1715,17 @@ $csrf = dashboardCsrfToken();
                         <?= dashboardEscape($userEmail) ?>
                     </p>
 
+                </section>
+
+                <section id="profile-settings" class="max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 dark:bg-slate-900 dark:border-slate-700">
+                    <h2 class="text-xl font-bold">Profile Settings</h2><p class="mt-2 text-sm">Review and confirm your own name for eBills enrollment. This does not change your current display name or sign-in access.</p>
+                    <form method="post" class="mt-4 grid gap-3 sm:grid-cols-2">
+                        <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrf) ?>"><input type="hidden" name="action" value="save_profile">
+                        <?php foreach(['first_name'=>'First Name','last_name'=>'Last Name','middle_name'=>'Middle Name (optional)','extension_name'=>'Name Extension (optional)','contact_number'=>'Contact Number (optional)'] as $profileKey=>$profileLabel): ?>
+                        <label class="text-sm font-semibold"><?= dashboardEscape($profileLabel) ?><input name="<?= dashboardEscape($profileKey) ?>" value="<?= dashboardEscape($portalProfile[$profileKey]??'') ?>" maxlength="<?= $profileKey==='contact_number'?11:25 ?>" <?= in_array($profileKey,['first_name','last_name'],true)?'required':'' ?> <?= $profileKey==='contact_number'?'pattern="09[0-9]{9}" inputmode="numeric" placeholder="09XXXXXXXXX"':'' ?> class="mt-1 block w-full rounded-xl border border-slate-300 p-2 dark:border-slate-600 dark:bg-slate-800"></label>
+                        <?php endforeach; ?>
+                        <button class="rounded-xl bg-paleco-700 px-4 py-2 font-semibold text-white sm:col-span-2">Save and Confirm Profile</button>
+                    </form>
                 </section>
 
                 <section class="max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
@@ -2622,6 +2684,7 @@ $csrf = dashboardCsrfToken();
 
 <script src="assets/js/theme.js"></script>
 <script src="assets/js/portal-shell.js"></script>
+<?php require __DIR__.'/includes/ebills-ui.php'; ?>
 <script src="assets/js/account-linking.js"></script>
 <script src="assets/js/account-unlinking.js"></script>
 

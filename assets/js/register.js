@@ -519,7 +519,7 @@ registerForm.addEventListener(
             document.getElementById(
                 "nameError"
             ).textContent =
-                "Please enter your full name.";
+                "Please enter your first name.";
 
             nameInput.classList.add(
                 "input-error"

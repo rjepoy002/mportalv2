@@ -1,0 +1,11 @@
+-- DRAFT ONLY: NOT APPROVED FOR EXECUTION.
+-- Inspection confirmed mco_portal.users has no contact/mobile/phone column.
+-- Review and approve before running; this is not an automatic startup migration.
+-- Nullable preserves every existing registration/login/profile record.
+-- Canonical Philippine mobile format is 09 followed by nine digits (11 total).
+-- Superseded by the approved five-column migration:
+-- php migrations/20261016_ebills_profile.php <completed-portal-backup.sql>
+-- Approved contact_number storage is VARCHAR(12), not this earlier draft's 11.
+
+-- No changes to palecxzp_pal_db.ebills or any PALECO operational table.
+-- This alone does not resolve the missing structured profile-name source.

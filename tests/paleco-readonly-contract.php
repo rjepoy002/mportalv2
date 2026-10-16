@@ -5,7 +5,7 @@
  * boundary in deployed environments.
  */
 $root = dirname(__DIR__);
-$writableTables = ['users', 'email_verifications', 'password_resets', 'paleco_accounts', 'account_link_challenges', 'account_link_limits', 'account_notifications'];
+$writableTables = ['users', 'email_verifications', 'password_resets', 'paleco_accounts', 'account_link_challenges', 'account_link_limits', 'account_notifications', 'activity_logs'];
 $files = [];
 $directory = new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS);
 $filter = new RecursiveCallbackFilterIterator(
@@ -30,8 +30,9 @@ foreach ($files as $file) {
     foreach ($sqlFragments as $token) {
         $sql = str_ends_with(strtolower($file), '.sql') ? $token[0] : $token[1];
         $line = str_ends_with(strtolower($file), '.sql') ? 1 : $token[2];
+        if (preg_match('/^[\'"]?SHOW\s+CREATE\s+TABLE\b/i', trim($sql))) continue;
         preg_match_all(
-            '/\b(?:INSERT\s+INTO|REPLACE\s+INTO|(?<!KEY )UPDATE|DELETE\s+FROM|ALTER\s+TABLE|DROP\s+TABLE|TRUNCATE\s+TABLE|CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?)\s+(?:`?(?<schema>[a-z_][a-z_0-9]*)`?\s*\.\s*)?`?(?<table>[a-z_][a-z_0-9]*)`?/i',
+            '/\b(?<operation>INSERT\s+INTO|REPLACE\s+INTO|(?<!KEY )UPDATE|DELETE\s+FROM|ALTER\s+TABLE|DROP\s+TABLE|TRUNCATE\s+TABLE|CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?)\s+(?:`?(?<schema>[a-z_][a-z_0-9]*)`?\s*\.\s*)?`?(?<table>[a-z_][a-z_0-9]*)`?/i',
             $sql,
             $matches,
             PREG_SET_ORDER
@@ -39,6 +40,11 @@ foreach ($files as $file) {
         foreach ($matches as $match) {
             $schema = strtolower($match['schema'] ?? '');
             $table = strtolower($match['table']);
+            if ($schema==='palecxzp_pal_db' && $table==='ebills'
+                && strtoupper($match['operation'])==='INSERT INTO'
+                && basename($file)==='ebills-enrollment.php'
+                && preg_match('/INSERT INTO palecxzp_pal_db\.ebills\s*\(([^)]+)\)/i',$sql,$columns)
+                && preg_replace('/\s+/','',strtolower($columns[1]))==='acccode,datecreated,timestamp,firstname,lastname,middlename,extensionname,email,contactnumber') continue;
             if (($schema !== '' && $schema !== 'mco_portal') || !in_array($table, $writableTables, true)) {
                 $violations[] = basename($file) . ':' . $line . ' targets ' . ($schema !== '' ? $schema . '.' : '') . $table;
             }

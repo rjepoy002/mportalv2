@@ -44,7 +44,7 @@
                 });
                 if (!response.ok) throw new Error('Request failed');
                 const result = await response.json();
-                if (result.linked) {
+                if (result.linked && !result.optional_step) {
                     window.location.assign('dashboard.php?page=account-settings');
                     return;
                 }
