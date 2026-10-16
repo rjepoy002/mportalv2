@@ -13,7 +13,7 @@ function check($condition, string $label): void
 // No real accounts or SMTP traffic: execute controllers against PDO/mail doubles.
 function sendEmail($email, $name, $subject, $html, $plain): bool
 {
-    $GLOBALS['mail'] = compact('html', 'plain');
+    $GLOBALS['mail'] = compact('subject', 'html', 'plain');
     return $GLOBALS['delivery'] ?? true;
 }
 
@@ -151,6 +151,12 @@ try {
     [$csrfMessage] = controller('forgot-password.php', $db, ['email' => 'test@example.com', 'csrf_token' => 'invalid']);
     check($csrfMessage === 'Please reload the page and try again.' && !$db->records && !isset($GLOBALS['mail']), 'CSRF fails before persistence or mail');
     [$knownMessage, $output] = controller('forgot-password.php', $db, ['email' => 'test@example.com']);
+    check($GLOBALS['mail']['subject'] === 'Reset Your PALECO MCO Portal Password', 'Official recovery email subject');
+    foreach (['html', 'plain'] as $format) {
+        check(str_contains($GLOBALS['mail'][$format], 'reset your PALECO MCO Portal password'), 'Official recovery body branding');
+        check(!str_contains($GLOBALS['mail'][$format], 'MPortalV2'), 'No legacy recovery branding');
+        check(!preg_match('/(?<!PALECO )MCO Portal/', $GLOBALS['mail'][$format]), 'No shortened recovery branding');
+    }
     preg_match('~https://example.com/portal/reset-password.php\?token=([a-f0-9]{64})~', $GLOBALS['mail']['plain'], $matches);
     check(isset($matches[1]), 'Configured plain-text link and 32-byte random token');
     $token = $matches[1];

@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         app_url('reset-password.php?token=' . rawurlencode($token));
 
                     // Email content
-                    $subject = 'Reset Your MCO Portal Password';
+                    $subject = 'Reset Your PALECO MCO Portal Password';
 
                     $htmlBody = '
                         <h2>Password Reset Request</h2>
@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <p>Hello ' . htmlspecialchars($user['name']) . ',</p>
 
                         <p>
-                            We received a request to reset your MCO Portal password.
+                            We received a request to reset your PALECO MCO Portal password.
                         </p>
 
                         <p>
@@ -136,20 +136,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <p>
                             Regards,<br>
-                            MCO Portal
+                            PALECO MCO Portal
                         </p>
                     ';
 
                     $plainBody =
                         "Hello {$user['name']},\n\n"
-                        . "We received a request to reset your MCO Portal password.\n\n"
+                        . "We received a request to reset your PALECO MCO Portal password.\n\n"
                         . "Reset your password using this link:\n"
                         . $resetLink . "\n\n"
                         . "This link will expire in 1 hour.\n\n"
                         . "If you did not request a password reset, you can safely "
                         . "ignore this email.\n\n"
                         . "Regards,\n"
-                        . "MCO Portal";
+                        . "PALECO MCO Portal";
 
                     $stage = 'email_delivery';
                     $delivered = sendEmail(
@@ -204,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Forgot Password | MCO Portal</title>
+    <title>Forgot Password | PALECO MCO Portal</title>
 
     <link
         rel="stylesheet"
@@ -226,13 +226,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <img
                         src="assets/images/logo.png"
-                        alt="MCO Portal Logo"
+                        alt="PALECO MCO Portal Logo"
                         class="logo"
                     >
 
                     <div>
                         <div class="brand-name">
-                            MCO PORTAL
+                            PALECO MCO Portal
                         </div>
 
                         <div class="brand-subtitle">
@@ -255,7 +255,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <p>
                         Forgot your password? Don't worry.
                         We'll help you securely regain access
-                        to your MCO Portal account.
+                        to your PALECO MCO Portal account.
                     </p>
 
                 </div>
@@ -369,7 +369,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="footer">
 
-                        MCO Portal &copy; <?= date('Y') ?>
+                        PALECO MCO Portal &copy; <?= date('Y') ?>
 
                     </div>
 

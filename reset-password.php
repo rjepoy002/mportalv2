@@ -204,7 +204,7 @@ if (
     >
 
     <title>
-        Reset Password | MCO Portal
+        Reset Password | PALECO MCO Portal
     </title>
 
 
@@ -265,7 +265,7 @@ if (
 
                 <img
                     src="assets/images/logo.png"
-                    alt="MCO Portal Logo"
+                    alt="PALECO MCO Portal Logo"
                     class="logo"
                 >
 
@@ -273,7 +273,7 @@ if (
                 <div>
 
                     <div class="brand-name">
-                        MCO PORTAL
+                        PALECO MCO Portal
                     </div>
 
                     <div class="brand-subtitle">
@@ -306,7 +306,7 @@ if (
                 <p>
 
                     Choose a strong password to keep
-                    your MCO Portal account secure.
+                    your PALECO MCO Portal account secure.
 
                 </p>
 
@@ -354,7 +354,7 @@ if (
 
                         <p>
                             Create a new password for your
-                            MCO Portal account.
+                            PALECO MCO Portal account.
                         </p>
 
                     </div>

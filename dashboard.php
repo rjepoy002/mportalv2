@@ -272,6 +272,7 @@ function syncLegacyEbillsAccounts(
         return;
     }
 
+    $notificationEvents = [];
     try {
 
         $pdo->beginTransaction();
@@ -358,6 +359,7 @@ function syncLegacyEbillsAccounts(
                 $userId,
                 $acctNo
             ]);
+            $notificationEvents[] = queueAccountNotification($pdo, $userId, $acctNo, 'linked');
         }
 
 
@@ -415,6 +417,7 @@ function syncLegacyEbillsAccounts(
         }
 
         $pdo->commit();
+        foreach ($notificationEvents as $event) dispatchAccountNotification($pdo, $event);
 
     } catch (Throwable $e) {
 
@@ -1593,7 +1596,7 @@ $csrf = dashboardCsrfToken();
                 <dialog id="unlink-account-dialog" aria-labelledby="unlink-account-title" aria-describedby="unlink-account-description" class="w-[calc(100%_-_2rem)] max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl backdrop:bg-slate-950/50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
                     <h2 id="unlink-account-title" class="text-xl font-bold">Unlink PALECO Account?</h2>
                     <div id="unlink-account-description" class="mt-3 space-y-3 text-sm leading-6">
-                        <p>Are you sure you want to unlink PALECO account <strong data-unlink-account-number></strong> from your MPortalV2 profile?</p>
+                        <p>Are you sure you want to unlink PALECO account <strong data-unlink-account-number></strong> from your PALECO MCO Portal profile?</p>
                         <p>This action will remove the account from your portal profile. Your official PALECO account and billing records will remain unchanged. You can link the account again later.</p>
                     </div>
                     <form method="post" class="mt-6 flex flex-wrap justify-end gap-3" data-unlink-form>

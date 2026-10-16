@@ -10,7 +10,7 @@ those tables from portal code or portal migrations.
 
 Portal-owned state belongs in dedicated portal tables. Current writable tables
 are `users`, `email_verifications`, `password_resets`, `paleco_accounts`,
-`account_link_challenges`, and `account_link_limits`.
+`account_link_challenges`, `account_link_limits`, and `account_notifications`.
 Account links, friendly labels, and primary-account choices live in
 `paleco_accounts`; they must not be copied back to `master`.
 

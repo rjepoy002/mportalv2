@@ -208,8 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <p>
 
-                    Welcome to the PALECO
-                    Member-Consumer Online Portal.
+                    Welcome to the PALECO MCO Portal.
 
                     Manage your account, view your
                     bills, monitor your electricity
@@ -307,7 +306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
                     <p>
-                        Sign in to your MCO Portal account.
+                        Sign in to your PALECO MCO Portal account.
                     </p>
 
                     <?php if ($success !== ''): ?>

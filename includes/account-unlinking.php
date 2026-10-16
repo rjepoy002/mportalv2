@@ -1,7 +1,8 @@
 <?php
+require_once __DIR__ . '/account-notifications.php';
 
 /** Archive only this user's portal association; operational records are read-only. */
-function unlinkPalecoAccount(PDO $pdo, int $userId, string $acctNo, string $token, string $csrf): bool
+function unlinkPalecoAccount(PDO $pdo, int $userId, string $acctNo, string $token, string $csrf, ?callable $notificationTransport = null): bool
 {
     if ($userId <= 0 || $acctNo === '' || $csrf === '' || !hash_equals($csrf, $token)) {
         throw new DomainException('Invalid account unlink request.');
@@ -31,7 +32,9 @@ function unlinkPalecoAccount(PDO $pdo, int $userId, string $acctNo, string $toke
         // A pre-unlink challenge must not silently restore the removed association.
         $clear = $pdo->prepare('DELETE FROM mco_portal.account_link_challenges WHERE user_id = ? AND AcctNo = ?');
         $clear->execute([$userId, $acctNo]);
+        $event = queueAccountNotification($pdo, $userId, $acctNo, 'unlinked');
         $pdo->commit();
+        dispatchAccountNotification($pdo, $event, $notificationTransport);
         return true;
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();

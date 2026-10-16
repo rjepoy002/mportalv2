@@ -5,7 +5,7 @@
  * boundary in deployed environments.
  */
 $root = dirname(__DIR__);
-$writableTables = ['users', 'email_verifications', 'password_resets', 'paleco_accounts', 'account_link_challenges', 'account_link_limits'];
+$writableTables = ['users', 'email_verifications', 'password_resets', 'paleco_accounts', 'account_link_challenges', 'account_link_limits', 'account_notifications'];
 $files = [];
 $directory = new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS);
 $filter = new RecursiveCallbackFilterIterator(

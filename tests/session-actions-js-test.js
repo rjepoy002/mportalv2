@@ -10,7 +10,7 @@ async function scenario(action,fail=false){
         window:{addEventListener(){},location:{assign:u=>navigated.push(u)},fetch:()=>{calls++;return new Promise(r=>resolve=r);}}
     });
     trigger.listeners.click();assert.equal(dialog.open,true);assert.equal(calls,0);assert.equal(cancel.focused,true);
-    assert.equal(title.textContent,action==='reset'?'Reset your password?':'Sign out of MPortalV2?');
+    assert.equal(title.textContent,action==='reset'?'Reset your password?':'Sign out of PALECO MCO Portal?');
     assert.equal(confirm.textContent,action==='reset'?'Continue to Reset':'Sign Out');
     cancel.listeners.click();assert.equal(dialog.open,false);assert.equal(calls,0);assert.equal(trigger.focused,true);
     trigger.listeners.click();let prevented=false;const event={preventDefault(){prevented=true;}};

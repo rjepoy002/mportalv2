@@ -41,6 +41,21 @@ function linkTestConfig(): array
     return $config;
 }
 
+$notificationMessages = [];
+$notificationResult = true;
+function linkTestTransport(...$message): bool
+{
+    global $pdo, $notificationMessages, $notificationResult;
+    if ($pdo->inTransaction()) throw new RuntimeException('Transport invoked before commit.');
+    $notificationMessages[] = $message;
+    if ($notificationResult === 'throw') throw new RuntimeException('private-recipient-and-secret');
+    return (bool)$notificationResult;
+}
+function fixtureUnlink(PDO $pdo, int $userId, string $acctNo, string $token, string $csrf): bool
+{
+    return unlinkPalecoAccount($pdo,$userId,$acctNo,$token,$csrf,'linkTestTransport');
+}
+
 function dashboardEscape($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -50,7 +65,7 @@ $pdo = linkTestPdo();
 if ($pdo->query('SELECT DATABASE()')->fetchColumn() !== 'mportal_account_linking_test') {
     throw new RuntimeException('Connection resolved outside the dedicated fixture database.');
 }
-$service = new PalecoAccountLinker($pdo, linkTestConfig());
+$service = new PalecoAccountLinker($pdo, linkTestConfig(), 'linkTestTransport');
 $csrf = str_repeat('c', 64);
 
 if (($argv[1] ?? '') === '--worker') {
@@ -89,7 +104,7 @@ function linkPost(array $input, int $user = 1): array
 function linkReset(): void
 {
     global $pdo;
-    foreach (['account_link_challenges', 'account_link_limits', 'paleco_accounts', 'billhistory', 'master'] as $table) $pdo->exec('DELETE FROM ' . $table);
+    foreach (['account_notifications', 'account_link_challenges', 'account_link_limits', 'paleco_accounts', 'billhistory', 'master'] as $table) $pdo->exec('DELETE FROM ' . $table);
     $pdo->exec("INSERT INTO master (AcctNo,AcctCode,MeterSerial,Name,Status) VALUES ('FIXTURE-A','12-3456-7890','00123A','Synthetic account','A'), ('FIXTURE-B','98-7654-3210','OTHER','Synthetic account','A')");
     $pdo->exec("INSERT INTO billhistory VALUES
         ('one','FIXTURE-A','202609',1250.00),
@@ -116,9 +131,9 @@ function linkFinish(string $amount = '1250.00', string $month = '202609', int $u
 }
 
 try {
-    $pdo->exec('CREATE TABLE users (id BIGINT UNSIGNED PRIMARY KEY) ENGINE=InnoDB');
+    $pdo->exec('CREATE TABLE users (id BIGINT UNSIGNED PRIMARY KEY, email VARCHAR(254), name VARCHAR(255)) ENGINE=InnoDB');
     $created[] = 'users';
-    $pdo->exec('INSERT INTO users VALUES (1),(2),(3)');
+    $pdo->exec("INSERT INTO users VALUES (1,'portal-one@example.test','Portal One'),(2,'portal-two@example.test','Portal Two'),(3,'portal-three@example.test','Portal Three')");
     $pdo->exec("CREATE TABLE master (AcctNo VARCHAR(15) PRIMARY KEY, AcctCode VARCHAR(12), MeterSerial VARCHAR(20), Name VARCHAR(50), Status CHAR(1), Address VARCHAR(255) DEFAULT 'Synthetic location') ENGINE=InnoDB");
     $created[] = 'master';
     // Reduced fixtures reproduce the exact types used by the verification queries.
@@ -130,6 +145,9 @@ try {
     $pdo->exec(str_replace('mco_portal.', 'mportal_account_linking_test.', $migration));
     $created[] = 'account_link_challenges';
     $created[] = 'account_link_limits';
+    $notificationMigration = file_get_contents(__DIR__.'/../migrations/20261016_account_notifications.sql');
+    $pdo->exec(str_replace('mco_portal.', 'mportal_account_linking_test.', $notificationMigration));
+    $created[] = 'account_notifications';
 
     linkReset();
     $disabled = new PalecoAccountLinker($pdo, ['enabled' => false]);
@@ -231,7 +249,7 @@ try {
     linkReset();linkStart();
     for($i=0;$i<5;$i++) linkCheck(!linkFinish('1300.00')['ok'],'Incorrect amount accepted during attempts.');
     linkCheck($service->pending(1)===null,'Five failures did not invalidate challenge.');
-    $service=new PalecoAccountLinker(linkTestPdo(),linkTestConfig());
+    $service=new PalecoAccountLinker(linkTestPdo(),linkTestConfig(), 'linkTestTransport');
     $_SESSION=[];
     linkStart();linkCheck(!linkFinish()['ok'],'Restart/session reset bypassed user cooldown.');
     linkStart(2);linkCheck(!linkFinish('1250.00','202609',2)['ok'],'Different user bypassed account cooldown.');
@@ -248,21 +266,21 @@ try {
     $billHash=hash('sha256',json_encode($pdo->query('SELECT * FROM billhistory ORDER BY TransID')->fetchAll()));
     foreach ([[0,'FIXTURE-A',$csrf],[3,'FIXTURE-A',$csrf],[1,'FIXTURE-A','bad']] as [$user,$account,$token]) {
         $rejected=false;
-        try { unlinkPalecoAccount($pdo,$user,$account,$token,$csrf); } catch(DomainException $e) { $rejected=true; }
+        try { fixtureUnlink($pdo,$user,$account,$token,$csrf); } catch(DomainException $e) { $rejected=true; }
         linkCheck($rejected,'Unauthenticated, foreign or CSRF-invalid unlink accepted.');
     }
     linkStart();
-    linkCheck(unlinkPalecoAccount($pdo,1,'FIXTURE-A',$csrf,$csrf),'Unlink failed.');
+    linkCheck(fixtureUnlink($pdo,1,'FIXTURE-A',$csrf,$csrf),'Unlink failed.');
     linkCheck($service->pending(1)===null,'Pre-unlink verification challenge survived.');
     linkCheck($pdo->query("SELECT status FROM paleco_accounts WHERE user_id=1 AND AcctNo='FIXTURE-A'")->fetchColumn()==='archived','Unlinked association remained active.');
     linkCheck($pdo->query("SELECT status FROM paleco_accounts WHERE user_id=2 AND AcctNo='FIXTURE-A'")->fetchColumn()==='active','Other portal user association changed.');
     linkCheck((int)$pdo->query("SELECT is_primary FROM paleco_accounts WHERE user_id=1 AND AcctNo='FIXTURE-B'")->fetchColumn()===1,'Remaining account not promoted.');
-    linkCheck(!unlinkPalecoAccount($pdo,1,'FIXTURE-A',$csrf,$csrf),'Repeated unlink was not idempotent.');
+    linkCheck(!fixtureUnlink($pdo,1,'FIXTURE-A',$csrf,$csrf),'Repeated unlink was not idempotent.');
     foreach ([fn()=>getUnpaidBills($pdo,1,'FIXTURE-A'),fn()=>soaAuthorizedSelectedAccount($pdo,1,'FIXTURE-A'),fn()=>soaLatestBillMonth($pdo,1,'FIXTURE-A')] as $read) {
         $rejected=false;try{$read();}catch(DomainException $e){$rejected=true;}
         linkCheck($rejected,'Unlinked account retained billing/SOA access.');
     }
-    linkCheck(unlinkPalecoAccount($pdo,1,'FIXTURE-B',$csrf,$csrf),'Final account unlink failed.');
+    linkCheck(fixtureUnlink($pdo,1,'FIXTURE-B',$csrf,$csrf),'Final account unlink failed.');
     linkCheck((int)$pdo->query("SELECT COUNT(*) FROM paleco_accounts WHERE user_id=1 AND status='active'")->fetchColumn()===0,'Final link remained active.');
     linkCheck((int)$pdo->query('SELECT COUNT(*) FROM users WHERE id=1')->fetchColumn()===1,'Portal profile removed.');
     linkStart();linkCheck(linkFinish()['ok'],'Unlinked account could not relink with verification.');
@@ -271,7 +289,7 @@ try {
     $pdo->exec('RENAME TABLE account_link_challenges TO temporarily_unavailable_challenges');
     try {
         $failed=false;
-        try{unlinkPalecoAccount($pdo,1,'FIXTURE-A',$csrf,$csrf);}catch(PDOException $e){$failed=true;}
+        try{fixtureUnlink($pdo,1,'FIXTURE-A',$csrf,$csrf);}catch(PDOException $e){$failed=true;}
         linkCheck($failed,'Database failure was not surfaced safely.');
         linkCheck($pdo->query("SELECT status FROM paleco_accounts WHERE user_id=1 AND AcctNo='FIXTURE-A'")->fetchColumn()==='active','Failed unlink did not roll back.');
     } finally {$pdo->exec('RENAME TABLE temporarily_unavailable_challenges TO account_link_challenges');}
@@ -306,8 +324,54 @@ try {
         foreach(glob($directory.'/*') as $file)unlink($file);
         rmdir($directory);
     }
+    linkCheck((int)$pdo->query('SELECT COUNT(*) FROM account_notifications')->fetchColumn()===1,'Concurrent linking queued duplicate notifications.');
+    linkReset();$notificationMessages=[];$notificationResult=true;
+    linkStart();linkCheck(count($notificationMessages)===0,'Step 1 sent a notification.');
+    linkPost(['action'=>'restart_link']);linkStart(1,['meter_number'=>'WRONG']);
+    linkStart();linkFinish('1300.00');
+    linkCheck(count($notificationMessages)===0 && (int)$pdo->query('SELECT COUNT(*) FROM account_notifications')->fetchColumn()===0,'Cancelled or failed verification queued a notification.');
+    linkFinish();
+    linkCheck(count($notificationMessages)===1,'Successful link did not send once.');
+    $mail=$notificationMessages[0];
+    linkCheck($mail[0]==='portal-one@example.test' && $mail[1]==='Portal One','Notification used a non-portal recipient.');
+    linkCheck($mail[2]==='PALECO Account Successfully Linked' && str_contains($mail[3],'12-3456-7890') && str_contains($mail[4],'My Home'),'Link notification UI identifier/name mismatch.');
+    linkCheck(str_contains($mail[4],'Asia/Manila') && str_contains($mail[4],'please reset your PALECO MCO Portal password immediately'),'Missing event timezone or security advisory.');
+    linkCheck(!str_contains(implode(' ',$mail),'FIXTURE-A') && !str_contains(implode(' ',$mail),'00123A'),'Email exposed internal identifier or meter.');
+    $event=$pdo->query('SELECT event_id FROM account_notifications')->fetchColumn();
+    dispatchAccountNotification($pdo,$event,'linkTestTransport');
+    linkStart();linkFinish();
+    linkCheck(count($notificationMessages)===1,'Repeated delivery/link request sent duplicate notification.');
+    fixtureUnlink($pdo,1,'FIXTURE-A',$csrf,$csrf);
+    linkCheck(count($notificationMessages)===2 && $notificationMessages[1][2]==='PALECO Account Unlinked','Successful unlink notification missing.');
+    fixtureUnlink($pdo,1,'FIXTURE-A',$csrf,$csrf);
+    linkCheck(count($notificationMessages)===2,'Repeated unlink sent duplicate notification.');
+    $notificationResult=false;linkStart();
+    linkCheck(linkFinish()['ok'],'Mail rejection misrepresented committed link.');
+    linkCheck($pdo->query("SELECT status FROM paleco_accounts WHERE user_id=1")->fetchColumn()==='active','Mail rejection reversed link.');
+    linkCheck((int)$pdo->query("SELECT COUNT(*) FROM account_notifications WHERE delivery_state='failed'")->fetchColumn()===1,'Mail rejection not recorded.');
+    $notificationResult='throw';
+    linkCheck(fixtureUnlink($pdo,1,'FIXTURE-A',$csrf,$csrf),'Transport exception misrepresented committed unlink.');
+    linkCheck($pdo->query("SELECT status FROM paleco_accounts WHERE user_id=1")->fetchColumn()==='archived','Transport exception reversed unlink.');
+    $count=count($notificationMessages);
+    foreach($pdo->query("SELECT event_id FROM account_notifications WHERE delivery_state='failed'")->fetchAll(PDO::FETCH_COLUMN) as $failed) dispatchAccountNotification($pdo,$failed,'linkTestTransport');
+    linkCheck(count($notificationMessages)===$count,'Failed/ambiguous transport was retried automatically.');
+    $pdo->beginTransaction();$rolled=queueAccountNotification($pdo,1,'FIXTURE-A','linked');$pdo->rollBack();
+    dispatchAccountNotification($pdo,$rolled,'linkTestTransport');
+    linkCheck(count($notificationMessages)===$count,'Rolled-back event sent an email.');
+    $notificationResult=true;
+    linkStart(2);linkFinish('1250.00','202609',2);
+    linkCheck(end($notificationMessages)[0]==='portal-two@example.test','Another user linking shared account used the wrong recipient.');
+    $sample=['event_type'=>'unlinked','account_code'=>'02-0504-9986','display_name'=>'<script>alert(1)</script>','recipient_name'=>'<b>Consumer</b>','occurred_at'=>0];
+    $template=accountNotificationMessage($sample);
+    linkCheck(str_contains($template['html'],'&lt;script&gt;') && !str_contains($template['html'],'<script>'),'Notification HTML did not escape account text.');
+    linkCheck(str_contains($template['plain'],'January 1, 1970, 8:00 AM'),'Event date was not converted to Asia/Manila.');
+    linkReset();$pdo->exec("UPDATE users SET email='invalid-address' WHERE id=1");
+    linkStart();linkCheck(linkFinish()['ok'],'Invalid notification address prevented successful linking.');
+    linkCheck($pdo->query('SELECT delivery_state FROM account_notifications')->fetchColumn()==='failed','Invalid registered email failure was not recorded.');
+    $pdo->exec("UPDATE users SET email='portal-one@example.test' WHERE id=1");
     linkCheck(hash_file('sha256',__DIR__.'/../config/mail.php')===$mailHash,'Mail configuration changed.');
-    $audit = file_get_contents($auditFile);
+    $audit = preg_replace('/event=[a-f0-9]{32}/','event=[opaque]',file_get_contents($auditFile));
+    linkCheck(!str_contains($audit,'private-recipient-and-secret') && !str_contains($audit,'portal-one@example.test'),'Notification logs exposed transport details.');
     linkCheck(!str_contains($audit, 'service_error'), 'Unexpected database or service errors were hidden by negative assertions.');
     foreach (['1250','1450','00123A','FIXTURE-A','1234567890','99999999999999999'] as $secret) linkCheck(!str_contains($audit,$secret),'Sensitive input leaked to audit records.');
     linkCheck(str_contains($audit,'linked') && str_contains($audit,'billing_rejected'),'Success/failure audit records are missing.');

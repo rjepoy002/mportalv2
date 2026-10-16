@@ -17,7 +17,7 @@ $portalInitial = strtoupper(substr(trim($portalUserDisplayName), 0, 1) ?: 'M');
         </div>
         <div class="portal-expanded-only portal-brand-copy min-w-0">
             <div class="break-words text-sm font-bold leading-tight">Palawan Electric Cooperative</div>
-            <div class="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">MCO Portal</div>
+            <div class="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">PALECO MCO Portal</div>
         </div>
     </div>    <nav class="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-5" aria-label="Main navigation">
         <?php foreach (portalNavigationItems() as $key => $item): ?>

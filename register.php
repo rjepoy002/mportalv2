@@ -271,8 +271,7 @@ if (
 
                         <p>
                             Thank you for registering
-                            for the PALECO Member-Consumer
-                            Online Portal.
+                            for the PALECO MCO Portal.
                         </p>
 
                         <p>

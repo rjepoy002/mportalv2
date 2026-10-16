@@ -7,8 +7,8 @@
     const confirm = dialog.querySelector('[data-session-confirm]');
     const error = dialog.querySelector('[data-session-error]');
     const actions = {
-        reset: { title: 'Reset your password?', message: 'You will be signed out of your MPortalV2 account to securely reset your password. You will need to sign in again after completing the password reset.', confirm: 'Continue to Reset' },
-        logout: { title: 'Sign out of MPortalV2?', message: 'Are you sure you want to sign out of your account?', confirm: 'Sign Out' },
+        reset: { title: 'Reset your password?', message: 'You will be signed out of your PALECO MCO Portal account to securely reset your password. You will need to sign in again after completing the password reset.', confirm: 'Continue to Reset' },
+        logout: { title: 'Sign out of PALECO MCO Portal?', message: 'Are you sure you want to sign out of your account?', confirm: 'Sign Out' },
     };
     let trigger, submitting = false, completed = false;
     document.querySelectorAll('[data-session-action]').forEach((button) => button.addEventListener('click', () => {

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/account-notifications.php';
 
 if (
     PHP_SAPI !== 'cli'
@@ -86,7 +87,12 @@ final class PalecoAccountLinker
     private const FAILURE = 'The information could not be verified. Please check your statement and try again.';
     private const UNAVAILABLE = 'Online account linking verification is unavailable. Please contact PALECO customer support.';
 
-    public function __construct(private PDO $pdo, private array $config) {}
+    private ?string $notificationEvent = null;
+    private $notificationTransport;
+    public function __construct(private PDO $pdo, private array $config, ?callable $notificationTransport = null)
+    {
+        $this->notificationTransport = $notificationTransport;
+    }
 
     public function enabled(): bool
     {
@@ -172,6 +178,7 @@ final class PalecoAccountLinker
     /** CSRF and authentication are also enforced here for every service caller. */
     public function handle(int $userId, array $input, string $csrf): array
     {
+        $this->notificationEvent = null;
         if ($userId <= 0) return $this->result(false, 'Please sign in to continue.');
         if ($csrf === '' || !is_string($input['csrf_token'] ?? null) || !hash_equals($csrf, $input['csrf_token'])) {
             $this->audit($userId, 'csrf_rejected');
@@ -194,6 +201,7 @@ final class PalecoAccountLinker
                 $result = $this->result(false, self::FAILURE);
             }
             $this->pdo->commit();
+            if ($this->notificationEvent !== null) dispatchAccountNotification($this->pdo, $this->notificationEvent, $this->notificationTransport);
             return $result;
         } catch (Throwable $e) {
             if ($this->pdo->inTransaction()) $this->pdo->rollBack();
@@ -311,6 +319,7 @@ final class PalecoAccountLinker
             $this->query("INSERT INTO mco_portal.paleco_accounts (user_id, AcctNo, account_nickname, is_primary, status, verified_at) VALUES (?, ?, ?, ?, 'active', NOW())", [$userId, $row['AcctNo'], $row['friendly_label'], $first ? 1 : 0]);
         }
         $this->audit($userId, 'linked');
+        $this->notificationEvent = queueAccountNotification($this->pdo, $userId, $row['AcctNo'], 'linked');
         return $this->result(true, 'PALECO account linked successfully.');
     }
 }
