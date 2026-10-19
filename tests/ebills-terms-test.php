@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__.'/../includes/ebills-enrollment.php';
+require_once __DIR__ . '/../app/services/ebills-enrollment.php';
 $checks=0;
 function termsCheck(bool $ok,string $message):void{global $checks;$checks++;if(!$ok)throw new RuntimeException($message);}
 $terms=EBillsEnrollment::termsHtml();
@@ -10,7 +10,7 @@ $expected=['Statement of Account.','Payment.','Start of Electronic Billing.','Pr
 foreach($expected as $heading)termsCheck(str_contains($terms,'<b>'.$heading.'</b>'),'Missing official clause.');
 termsCheck(str_contains($terms,'By accepting these EBTC terms you agree and represent'),'Concluding authority paragraph omitted.');
 function dashboardEscape($value):string{return htmlspecialchars((string)$value,ENT_QUOTES,'UTF-8');}
-$csrf='test-csrf';ob_start();include __DIR__.'/../includes/ebills-ui.php';$html=ob_get_clean();
+$csrf='test-csrf';ob_start();include __DIR__ . '/../app/views/partials/ebills-ui.php';$html=ob_get_clean();
 termsCheck(str_contains($html,$terms),'Modal does not display the complete official snapshot.');
 termsCheck(strpos($html,'data-ebills-screen="1"')<strpos($html,'data-ebills-screen="2"'),'Terms do not precede personal information.');
 termsCheck(str_contains($html,'data-ebills-screen="2" hidden')&&str_contains($html,'data-ebills-screen="3" hidden'),'Information/review exposed initially.');

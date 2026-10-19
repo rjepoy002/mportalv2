@@ -1,0 +1,10 @@
+# Copy these rules into the deployment root .htaccess. Preserve deployment-specific directives.
+
+# MPortalV2: deny directory listings and sensitive root artifacts.
+Options -Indexes
+<FilesMatch "(?i)^(?:\..*|composer\.(?:json|lock)|.*\.(?:bak|patch|sql|log|zip))$">
+    Require all denied
+</FilesMatch>
+
+RewriteEngine On
+RewriteRule ^(?:\.git|\.agents|\.codex|\.aws)(?:/|$) - [F,L]

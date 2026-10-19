@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../includes/billing-service.php';
+require_once __DIR__ . '/../app/services/billing-service.php';
 
 $emptySummary = summarizeUnpaidBills([]);
 $expectedEmpty = [

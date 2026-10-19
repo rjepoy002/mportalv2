@@ -1,10 +1,3 @@
 <?php
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-if (!isset($_SESSION['user_id'])) {
-    header("Location: /mco-portal-v2/index.php");
-    exit;
-}
+// Compatibility include; implementation lives under app/.
+require_once __DIR__ . '/../app/middleware/auth.php';

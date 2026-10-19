@@ -1,6 +1,6 @@
 <?php
 // Isolated PHP server + synthetic sessions. No database or email actions.
-$directory=__DIR__.'/session-actions-'.bin2hex(random_bytes(6));
+$directory=__DIR__ . '/session-actions-'.bin2hex(random_bytes(6));
 mkdir($directory,0700);
 $socket=stream_socket_server('tcp://127.0.0.1:0',$errno,$error);
 if(!$socket)throw new RuntimeException('Cannot allocate test port.');

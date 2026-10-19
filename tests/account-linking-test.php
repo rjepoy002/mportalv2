@@ -1,7 +1,7 @@
 <?php
 
 // Pure input tests do not require a PHP session or a writable session directory.
-require_once __DIR__ . '/../includes/account-linking.php';
+require_once __DIR__ . '/../app/services/account-linking.php';
 
 function accountLinkAssert(bool $condition, string $message): void
 {

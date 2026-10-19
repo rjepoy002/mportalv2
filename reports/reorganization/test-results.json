@@ -1,0 +1,616 @@
+{
+  "results": [
+    {
+      "file": "account-linking-mysql-test.php",
+      "status": "SKIP",
+      "exit": 0,
+      "output": "SKIP MySQL linking tests: set ACCOUNT_LINK_TEST_DSN for mportal_account_linking_test."
+    },
+    {
+      "file": "account-linking-test.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Account linking input and configuration tests passed."
+    },
+    {
+      "file": "account-notification-mailer-test.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Account notification mailer tests passed (real sendEmail infrastructure; fake transport, no network)."
+    },
+    {
+      "file": "account-notification-template-test.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Account notification template tests passed (37 assertions)."
+    },
+    {
+      "file": "billing-summary-test.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Billing summary fixture check passed."
+    },
+    {
+      "file": "consumer-education-smoke.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Consumer Education smoke check passed."
+    },
+    {
+      "file": "dashboard-smoke.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Dashboard smoke check passed."
+    },
+    {
+      "file": "ebills-enrollment-mysql-test.php",
+      "status": "SKIP",
+      "exit": 0,
+      "output": "SKIP: set EBILLS_TEST_DSN for mportal_ebills_test."
+    },
+    {
+      "file": "ebills-terms-test.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Official eBills terms/render tests passed (24 assertions)."
+    },
+    {
+      "file": "education-playlist-test.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Education playlist API pagination, availability, cache, fallback and privacy tests passed (fake transport)."
+    },
+    {
+      "file": "paleco-readonly-contract.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "PALECO read-only contract check passed."
+    },
+    {
+      "file": "password-recovery-concurrency.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Concurrent limiter tests passed (8 email workers, 16 IP workers)."
+    },
+    {
+      "file": "password-recovery-mailer-test.php",
+      "status": "FAIL",
+      "exit": 255,
+      "output": "Fatal error: Uncaught RuntimeException: Missing safe configuration diagnostic in C:\\xampp\\htdocs\\mportalv2\\tests\\password-recovery-mailer-test.php:59\nStack trace:\n#0 {main}\n  thrown in C:\\xampp\\htdocs\\mportalv2\\tests\\password-recovery-mailer-test.php on line 59\nPHP Fatal error:  Uncaught RuntimeException: Missing safe configuration diagnostic in C:\\xampp\\htdocs\\mportalv2\\tests\\password-recovery-mailer-test.php:59\nStack trace:\n#0 {main}\n  thrown in C:\\xampp\\htdocs\\mportalv2\\tests\\password-recovery-mailer-test.php on line 59"
+    },
+    {
+      "file": "password-recovery-mysql-test.php",
+      "status": "SKIP",
+      "exit": 0,
+      "output": "SKIP MySQL token concurrency test: PASSWORD_RESET_TEST_DSN is not configured."
+    },
+    {
+      "file": "password-reset-test.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Password recovery PHP regression tests passed (PDO/mail doubles; real file limiter)."
+    },
+    {
+      "file": "profile-registration-test.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Profile and registration tests passed (24 assertions; GET only, no real registration/email)."
+    },
+    {
+      "file": "session-actions-http-test.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Session action HTTP tests passed (22 assertions; synthetic sessions only)."
+    },
+    {
+      "file": "soa-service-test.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "SOA service tests passed."
+    },
+    {
+      "file": "account-linking-js-test.js",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Account linking submission-control tests passed."
+    },
+    {
+      "file": "account-linking-navigation-test.js",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Account linking navigation tests passed (Step 1, errors, Back, expiry and final success)."
+    },
+    {
+      "file": "account-unlinking-js-test.js",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Account unlink confirmation tests passed."
+    },
+    {
+      "file": "ebills-enrollment-js-test.js",
+      "status": "PASS",
+      "exit": 0,
+      "output": "eBills three-screen modal tests passed (174 assertions)."
+    },
+    {
+      "file": "ebills-layout-browser-test.js",
+      "status": "FAIL",
+      "exit": 1,
+      "output": "C:\\xampp\\htdocs\\mportalv2\\tests\\ebills-layout-browser-test.js:52\r\n  if(!match)throw Error('Browser did not produce layout results: '+(browser.error?.message||browser.stderr?.slice(-500)||browser.status));\r\n            ^\r\n\r\nError: Browser did not produce layout results: ile because it is being used by another process. (0x20)\r\r\n[45264:47708:1019/134515.038:ERROR:services\\device\\public\\cpp\\geolocation\\system_geolocation_source_win.cc:124] Failed to create IAppCapability: Access is denied. (0x80070005)\r\r\n[45264:16572:1019/134515.042:ERROR:content\\browser\\gpu\\gpu_process_host.cc:1043] GPU process exited unexpectedly: exit_code=-1073741790\r\r\n[45264:16572:1019/134515.043:FATAL:content\\browser\\gpu\\gpu_data_manager_impl_private.cc:389] GPU process isn't usable. Goodbye.\r\r\n\r\n    at Object.<anonymous> (C:\\xampp\\htdocs\\mportalv2\\tests\\ebills-layout-browser-test.js:52:19)\r\n    at Module._compile (node:internal/modules/cjs/loader:1929:14)\r\n    at Object..js (node:internal/modules/cjs/loader:2060:10)\r\n    at Module.load (node:internal/modules/cjs/loader:1651:32)\r\n    at Module._load (node:internal/modules/cjs/loader:1443:12)\r\n    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)\r\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\r\n    at node:internal/main/run_main_module:33:47\r\n\r\nNode.js v24.20.0"
+    },
+    {
+      "file": "education-player-test.js",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Education player selection, iframe lifecycle, error fallback and pagination tests passed (DOM doubles)."
+    },
+    {
+      "file": "password-recovery-js-test.js",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Password recovery JavaScript tests passed (63 assertions)."
+    },
+    {
+      "file": "session-actions-js-test.js",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Session confirmation UI tests passed (Cancel, Escape, focus, once-only POST, errors and both redirects)."
+    },
+    {
+      "file": "structure-test.php",
+      "status": "PASS",
+      "exit": 0,
+      "output": "Structure and dependency checks passed (161 assertions)."
+    }
+  ],
+  "lint": [
+    {
+      "file": "api\\soa.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\controllers\\consumer-education.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\controllers\\dashboard.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\controllers\\forgot-password.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\controllers\\google-callback.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\controllers\\google-login.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\controllers\\index.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\controllers\\logout.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\controllers\\register.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\controllers\\reset-password.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\controllers\\test-email.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\helpers\\account-email-footer.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\helpers\\portal-navigation.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\helpers\\recovery-log.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\middleware\\account-context.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\middleware\\auth.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\services\\account-linking.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\services\\account-notifications.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\services\\account-unlinking.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\services\\billing-service.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\services\\ebills-enrollment.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\services\\education-playlist.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\services\\mailer.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\services\\password-recovery.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\services\\soa-service.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\views\\pages\\consumer-education.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\views\\pages\\dashboard.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\views\\pages\\forgot-password.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\views\\pages\\index.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\views\\pages\\register.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\views\\pages\\reset-password.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\views\\partials\\account-linking-form.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\views\\partials\\ebills-step3.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\views\\partials\\ebills-ui.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\views\\partials\\portal-header.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\views\\partials\\portal-sidebar.php",
+      "status": "PASS"
+    },
+    {
+      "file": "app\\views\\partials\\session-action-dialogs.php",
+      "status": "PASS"
+    },
+    {
+      "file": "assets\\js\\account-linking.js",
+      "status": "PASS"
+    },
+    {
+      "file": "assets\\js\\account-unlinking.js",
+      "status": "PASS"
+    },
+    {
+      "file": "assets\\js\\consumer-education.js",
+      "status": "PASS"
+    },
+    {
+      "file": "assets\\js\\dashboard.js",
+      "status": "PASS"
+    },
+    {
+      "file": "assets\\js\\ebills-enrollment.js",
+      "status": "PASS"
+    },
+    {
+      "file": "assets\\js\\forgot-password.js",
+      "status": "PASS"
+    },
+    {
+      "file": "assets\\js\\login.js",
+      "status": "PASS"
+    },
+    {
+      "file": "assets\\js\\portal-shell.js",
+      "status": "PASS"
+    },
+    {
+      "file": "assets\\js\\register.js",
+      "status": "PASS"
+    },
+    {
+      "file": "assets\\js\\reset-password.js",
+      "status": "PASS"
+    },
+    {
+      "file": "assets\\js\\session-actions.js",
+      "status": "PASS"
+    },
+    {
+      "file": "assets\\js\\theme.js",
+      "status": "PASS"
+    },
+    {
+      "file": "config\\account-linking.php",
+      "status": "PASS"
+    },
+    {
+      "file": "config\\app.php",
+      "status": "PASS"
+    },
+    {
+      "file": "config\\auth.php",
+      "status": "PASS"
+    },
+    {
+      "file": "config\\consumer-education.php",
+      "status": "PASS"
+    },
+    {
+      "file": "config\\database.php",
+      "status": "PASS"
+    },
+    {
+      "file": "config\\google.php",
+      "status": "PASS"
+    },
+    {
+      "file": "config\\mail.php",
+      "status": "PASS"
+    },
+    {
+      "file": "config\\mailer.php",
+      "status": "PASS"
+    },
+    {
+      "file": "config\\soa.php",
+      "status": "PASS"
+    },
+    {
+      "file": "consumer-education.php",
+      "status": "PASS"
+    },
+    {
+      "file": "dashboard.php",
+      "status": "PASS"
+    },
+    {
+      "file": "database\\migrations\\20261016_ebills_profile.php",
+      "status": "PASS"
+    },
+    {
+      "file": "forgot-password.php",
+      "status": "PASS"
+    },
+    {
+      "file": "google-callback.php",
+      "status": "PASS"
+    },
+    {
+      "file": "google-login.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\account-context.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\account-email-footer.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\account-linking-form.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\account-linking.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\account-notifications.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\account-unlinking.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\billing-service.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\ebills-enrollment.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\ebills-step3.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\ebills-ui.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\education-playlist.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\password-recovery.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\portal-header.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\portal-navigation.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\portal-sidebar.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\recovery-log.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\session-action-dialogs.php",
+      "status": "PASS"
+    },
+    {
+      "file": "includes\\soa-service.php",
+      "status": "PASS"
+    },
+    {
+      "file": "index.php",
+      "status": "PASS"
+    },
+    {
+      "file": "jobs\\send-account-notifications.php",
+      "status": "PASS"
+    },
+    {
+      "file": "logout.php",
+      "status": "PASS"
+    },
+    {
+      "file": "migrations\\20261016_ebills_profile.php",
+      "status": "PASS"
+    },
+    {
+      "file": "register.php",
+      "status": "PASS"
+    },
+    {
+      "file": "reset-password.php",
+      "status": "PASS"
+    },
+    {
+      "file": "soa.php",
+      "status": "PASS"
+    },
+    {
+      "file": "test-email.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\account-linking-mysql-test.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\account-linking-test.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\account-notification-mailer-test.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\account-notification-template-test.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\billing-summary-test.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\consumer-education-smoke.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\dashboard-smoke.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\ebills-enrollment-mysql-test.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\ebills-terms-test.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\education-playlist-sync.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\education-playlist-test.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\paleco-readonly-contract.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\password-recovery-concurrency.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\password-recovery-inspect.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\password-recovery-mailer-test.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\password-recovery-mysql-test.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\password-reset-test.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\profile-registration-test.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\session-actions-http-test.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\soa-service-test.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests\\source-helpers.php",
+      "status": "PASS"
+    },
+    {
+      "file": "tests/structure-test.php",
+      "status": "PASS"
+    }
+  ]
+}

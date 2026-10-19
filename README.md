@@ -1,5 +1,15 @@
 # MCO Portal
 
+Application implementations now live under `app/`, with page templates in
+`app/views/`, existing assets in `assets/`, the SOA implementation in `api/`,
+and migration resources in `database/migrations/`. Root PHP files preserve
+existing public URLs; `includes/` retains compatibility includes.
+
+See [the reorganization report](reports/reorganization/final-report.md) for
+the inventory, relocation map, validation results, deployment rules and rollback.
+Run `php tests/structure-test.php` to check relocated dependencies. Run jobs and
+tests through CLI; their directories intentionally reject direct HTTP requests.
+
 ## Database ownership boundary
 
 The PALECO operational tables, including `master`, `member`, `billhistory`,

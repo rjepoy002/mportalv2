@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__.'/../config/mailer.php';
-require_once __DIR__.'/../includes/account-notifications.php';
+require_once __DIR__ . '/../app/services/mailer.php';
+require_once __DIR__ . '/../app/services/account-notifications.php';
 final class AccountEventFakeMailer extends \PHPMailer\PHPMailer\PHPMailer
 {
     public string $outcome='accepted';
@@ -13,7 +13,7 @@ final class AccountEventFakeMailer extends \PHPMailer\PHPMailer\PHPMailer
         return $this->outcome==='accepted';
     }
 }
-$path=__DIR__.'/notification-mailer-'.bin2hex(random_bytes(6)).'.log';
+$path=__DIR__ . '/notification-mailer-'.bin2hex(random_bytes(6)).'.log';
 $previous=ini_set('error_log',$path);
 try {
     foreach(['linked','unlinked'] as $event) {

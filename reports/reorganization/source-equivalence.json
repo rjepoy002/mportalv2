@@ -1,0 +1,192 @@
+[
+  {
+    "original": "includes/account-context.php",
+    "destination": "app/middleware/account-context.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/account-email-footer.php",
+    "destination": "app/helpers/account-email-footer.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/account-linking-form.php",
+    "destination": "app/views/partials/account-linking-form.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/account-linking.php",
+    "destination": "app/services/account-linking.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/account-notifications.php",
+    "destination": "app/services/account-notifications.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/account-unlinking.php",
+    "destination": "app/services/account-unlinking.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/billing-service.php",
+    "destination": "app/services/billing-service.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/ebills-enrollment.php",
+    "destination": "app/services/ebills-enrollment.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/ebills-step3.php",
+    "destination": "app/views/partials/ebills-step3.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/ebills-ui.php",
+    "destination": "app/views/partials/ebills-ui.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/education-playlist.php",
+    "destination": "app/services/education-playlist.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/password-recovery.php",
+    "destination": "app/services/password-recovery.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/portal-header.php",
+    "destination": "app/views/partials/portal-header.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/portal-navigation.php",
+    "destination": "app/helpers/portal-navigation.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/portal-sidebar.php",
+    "destination": "app/views/partials/portal-sidebar.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/recovery-log.php",
+    "destination": "app/helpers/recovery-log.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/session-action-dialogs.php",
+    "destination": "app/views/partials/session-action-dialogs.php",
+    "equivalent": true
+  },
+  {
+    "original": "includes/soa-service.php",
+    "destination": "app/services/soa-service.php",
+    "equivalent": true
+  },
+  {
+    "original": "config/auth.php",
+    "destination": "app/middleware/auth.php",
+    "equivalent": true
+  },
+  {
+    "original": "config/mailer.php",
+    "destination": "app/services/mailer.php",
+    "equivalent": true
+  },
+  {
+    "original": "index.php",
+    "destination": "app/controllers/index.php",
+    "equivalent": true
+  },
+  {
+    "original": "register.php",
+    "destination": "app/controllers/register.php",
+    "equivalent": true
+  },
+  {
+    "original": "dashboard.php",
+    "destination": "app/controllers/dashboard.php",
+    "equivalent": true
+  },
+  {
+    "original": "forgot-password.php",
+    "destination": "app/controllers/forgot-password.php",
+    "equivalent": true
+  },
+  {
+    "original": "reset-password.php",
+    "destination": "app/controllers/reset-password.php",
+    "equivalent": true
+  },
+  {
+    "original": "consumer-education.php",
+    "destination": "app/controllers/consumer-education.php",
+    "equivalent": true
+  },
+  {
+    "original": "google-login.php",
+    "destination": "app/controllers/google-login.php",
+    "equivalent": true
+  },
+  {
+    "original": "google-callback.php",
+    "destination": "app/controllers/google-callback.php",
+    "equivalent": true
+  },
+  {
+    "original": "logout.php",
+    "destination": "app/controllers/logout.php",
+    "equivalent": true
+  },
+  {
+    "original": "test-email.php",
+    "destination": "app/controllers/test-email.php",
+    "equivalent": true
+  },
+  {
+    "original": "soa.php",
+    "destination": "api/soa.php",
+    "equivalent": true
+  },
+  {
+    "original": "migrations/20261016_account_link_verification.sql",
+    "destination": "database/migrations/20261016_account_link_verification.sql",
+    "equivalent": true
+  },
+  {
+    "original": "migrations/20261016_account_notifications.sql",
+    "destination": "database/migrations/20261016_account_notifications.sql",
+    "equivalent": true
+  },
+  {
+    "original": "migrations/20261016_ebills_profile.php",
+    "destination": "database/migrations/20261016_ebills_profile.php",
+    "equivalent": true
+  },
+  {
+    "original": "migrations/20261016_ebills_profile_contact_DRAFT.sql",
+    "destination": "database/migrations/20261016_ebills_profile_contact_DRAFT.sql",
+    "equivalent": true
+  },
+  {
+    "original": "migrations/20261016_ebills_profile_rollback.sql",
+    "destination": "database/migrations/20261016_ebills_profile_rollback.sql",
+    "equivalent": true
+  },
+  {
+    "original": "dashboard.php.pre-recovery-20261009-133818.patch",
+    "destination": "storage/archive/dashboard.php.pre-recovery-20261009-133818.patch",
+    "equivalent": true
+  },
+  {
+    "original": "dashboard.php.pre-recovery-20261009-133829.bak",
+    "destination": "storage/archive/dashboard.php.pre-recovery-20261009-133829.bak",
+    "equivalent": true
+  }
+]

@@ -1,9 +1,9 @@
 <?php
 
-require_once __DIR__ . '/../includes/account-linking.php';
-require_once __DIR__ . '/../includes/account-unlinking.php';
-require_once __DIR__ . '/../includes/billing-service.php';
-require_once __DIR__ . '/../includes/soa-service.php';
+require_once __DIR__ . '/../app/services/account-linking.php';
+require_once __DIR__ . '/../app/services/account-unlinking.php';
+require_once __DIR__ . '/../app/services/billing-service.php';
+require_once __DIR__ . '/../app/services/soa-service.php';
 
 // Opt-in, isolated fixtures only. Never point this suite at application databases.
 $dsn = getenv('ACCOUNT_LINK_TEST_DSN');
@@ -141,11 +141,11 @@ try {
     $created[] = 'billhistory';
     $pdo->exec("CREATE TABLE paleco_accounts (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, user_id BIGINT UNSIGNED, AcctNo VARCHAR(15), account_nickname VARCHAR(100), is_primary TINYINT DEFAULT 0, status ENUM('active','archived'), verified_at DATETIME, UNIQUE KEY uq_user_acctno(user_id,AcctNo)) ENGINE=InnoDB");
     $created[] = 'paleco_accounts';
-    $migration = file_get_contents(__DIR__ . '/../migrations/20261016_account_link_verification.sql');
+    $migration = file_get_contents(__DIR__ . '/../database/migrations/20261016_account_link_verification.sql');
     $pdo->exec(str_replace('mco_portal.', 'mportal_account_linking_test.', $migration));
     $created[] = 'account_link_challenges';
     $created[] = 'account_link_limits';
-    $notificationMigration = file_get_contents(__DIR__.'/../migrations/20261016_account_notifications.sql');
+    $notificationMigration = file_get_contents(__DIR__ . '/../database/migrations/20261016_account_notifications.sql');
     $pdo->exec(str_replace('mco_portal.', 'mportal_account_linking_test.', $notificationMigration));
     $created[] = 'account_notifications';
 
@@ -173,7 +173,7 @@ try {
     $accountLinker=$service;
     $accountLinkFormError=null;
     $accountLinkPending['summary']['consumer_name']='<img src=x onerror=alert(1)>';
-    ob_start();require __DIR__.'/../includes/account-linking-form.php';$view=ob_get_clean();
+    ob_start();require __DIR__ . '/../app/views/partials/account-linking-form.php';$view=ob_get_clean();
     linkCheck(str_contains($view,'id="account-linking-panel"'),'Panel is missing its navigation target.');
     linkCheck(str_contains($view,'12-3456-7890') && str_contains($view,'Synthetic location'),'Verified summary absent from Step 2.');
     linkCheck(str_contains($view,'&lt;img') && !str_contains($view,'<img src=x'),'Summary was not HTML escaped.');
@@ -299,7 +299,7 @@ try {
     // Two independent PHP processes submit the same live challenge together.
     linkReset();linkStart();
     $token=$service->pending(1)['id'];
-    $directory=__DIR__.'/link-concurrency-'.bin2hex(random_bytes(6));
+    $directory=__DIR__ . '/link-concurrency-'.bin2hex(random_bytes(6));
     mkdir($directory,0700);
     $workers=[];
     try {
@@ -370,7 +370,7 @@ try {
     linkStart();linkCheck(linkFinish()['ok'],'Invalid notification address prevented successful linking.');
     linkCheck($pdo->query('SELECT delivery_state FROM account_notifications')->fetchColumn()==='failed','Invalid registered email failure was not recorded.');
     $pdo->exec("UPDATE users SET email='portal-one@example.test' WHERE id=1");
-    linkCheck(hash_file('sha256',__DIR__.'/../config/mail.php')===$mailHash,'Mail configuration changed.');
+    linkCheck(hash_file('sha256',__DIR__ . '/../config/mail.php')===$mailHash,'Mail configuration changed.');
     $audit = preg_replace('/event=[a-f0-9]{32}/','event=[opaque]',file_get_contents($auditFile));
     linkCheck(!str_contains($audit,'private-recipient-and-secret') && !str_contains($audit,'portal-one@example.test'),'Notification logs exposed transport details.');
     linkCheck(!str_contains($audit, 'service_error'), 'Unexpected database or service errors were hidden by negative assertions.');

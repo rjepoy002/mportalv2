@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__.'/../includes/ebills-enrollment.php';
+require_once __DIR__ . '/../app/services/ebills-enrollment.php';
 $dsn=getenv('EBILLS_TEST_DSN');
 if(!$dsn){echo "SKIP: set EBILLS_TEST_DSN for mportal_ebills_test.\n";exit;}
 if(!str_starts_with($dsn,'mysql:')||!preg_match('/(?:^|;)dbname=mportal_ebills_test(?:;|$)/',substr($dsn,6)))throw new RuntimeException('Dedicated eBills test database required.');
@@ -108,7 +108,7 @@ try{
     }finally{$pdo->exec('RENAME TABLE unavailable_activity_logs TO activity_logs');}
     // Two different users compete for one AccCode: one record and one consent.
     $pdo->exec('DELETE FROM ebills');$pdo->exec('DELETE FROM activity_logs');
-    $directory=__DIR__.'/ebills-concurrent-'.bin2hex(random_bytes(6));mkdir($directory,0700);$workers=[];
+    $directory=__DIR__ . '/ebills-concurrent-'.bin2hex(random_bytes(6));mkdir($directory,0700);$workers=[];
     try{
         foreach([1,2] as $id){$process=proc_open([PHP_BINARY,__FILE__,'--worker',$directory,(string)$id],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);if(!is_resource($process))throw new RuntimeException('Worker startup failed.');fclose($pipes[0]);$workers[]=[$process,$pipes];}
         $deadline=microtime(true)+10;while(count(glob($directory.'/ready-*'))!==2){if(microtime(true)>$deadline)throw new RuntimeException('Worker timeout.');usleep(1000);}file_put_contents($directory.'/go','1');

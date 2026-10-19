@@ -41,7 +41,7 @@ function consumerEducationVideos(): array
     return PALECO_CONSUMER_EDUCATION_VIDEOS;
 }
 
-require_once __DIR__ . '/../includes/education-playlist.php';
+require_once __DIR__ . '/../app/services/education-playlist.php';
 
 function consumerEducationPlaylistUrl(): string
 {

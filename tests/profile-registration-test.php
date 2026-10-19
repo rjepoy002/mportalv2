@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__.'/../includes/ebills-enrollment.php';
+require_once __DIR__ . '/../app/services/ebills-enrollment.php';
 $checks=0;
 function profileCheck(bool $ok,string $message):void{global $checks;$checks++;if(!$ok)throw new RuntimeException($message);}
 $valid=['first_name'=>' Ana Maria ','last_name'=>'De la Cruz','middle_name'=>'','extension_name'=>'Jr.','contact_number'=>''];
@@ -14,7 +14,7 @@ foreach([['first_name'=>''],['last_name'=>''],['first_name'=>['tampered']],['fir
     $rejected=false;try{portalProfileValues(array_replace($valid,$bad));}catch(DomainException $e){$rejected=true;}profileCheck($rejected,'Invalid profile accepted.');
 }
 session_save_path(sys_get_temp_dir());$_SERVER['REQUEST_METHOD']='GET';
-ob_start();require __DIR__.'/../register.php';$html=ob_get_clean();
+ob_start();require __DIR__ . '/../register.php';$html=ob_get_clean();
 foreach(['first_name','last_name','middle_name','extension_name','contact_number'] as $key)profileCheck(str_contains($html,'name="'.$key.'"'),'Registration field missing.');
 profileCheck(str_contains($html,'id="nameError"'),'Existing registration error target removed.');
 profileCheck(!str_contains($html,'name="name"'),'Old full-name input remains authoritative.');

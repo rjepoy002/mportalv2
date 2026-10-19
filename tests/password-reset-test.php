@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/source-helpers.php';
 
 putenv('APP_ENV=test');
 require_once dirname(__DIR__) . '/config/app.php';
@@ -98,7 +99,7 @@ function controller($file, $pdo, $post, $get = []): array
     $_SERVER['HTTP_X_FORWARDED_FOR'] = '203.0.113.' . random_int(1, 254);
     $_POST = $post;
     $_GET = $get;
-    $source = str_replace("\r\n", "\n", file_get_contents(dirname(__DIR__) . '/' . $file));
+    $source = str_replace("\r\n", "\n", portalPageSource($file));
     $source = preg_replace('/^[ \t]*require_once .*;$/m', '', $source);
     $source = str_replace("header('Location: index.php?reset=success');", '$GLOBALS["redirect"] = "index.php?reset=success";', $source);
     $source = preg_replace('/\bexit;/', 'return;', $source);
@@ -241,7 +242,7 @@ try {
     check(str_contains($logs, 'request_id') && str_contains($logs, 'timestamp'), 'Correlation and UTC timestamp recorded');
     check(!str_contains($logs, $token) && !str_contains($logs, 'test@example.com') && !str_contains($logs, '?token='), 'Logs omit tokens, links and email');
     foreach (['forgot-password.php', 'reset-password.php'] as $file) {
-        $source = file_get_contents(dirname(__DIR__) . '/' . $file);
+        $source = portalPageSource($file);
         foreach (['Referrer-Policy: no-referrer', 'Cache-Control: no-store', 'Pragma: no-cache'] as $header) check(str_contains($source, $header), 'Privacy header');
     }
     echo "Password recovery PHP regression tests passed (PDO/mail doubles; real file limiter).\n";

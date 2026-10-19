@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/source-helpers.php';
 
 session_save_path(sys_get_temp_dir());
 session_start();
@@ -11,7 +12,7 @@ if (!$userId) {
 
 $_SESSION['user_id'] = (int) $userId;
 $_SESSION['user_name'] = 'Smoke Test';
-require_once __DIR__ . '/../includes/account-context.php';
+require_once __DIR__ . '/../app/middleware/account-context.php';
 $_GET['page'] = 'accounts';
 $_SERVER['REQUEST_METHOD'] = 'GET';
 $_SERVER['HTTP_HOST'] = 'localhost';
@@ -58,7 +59,7 @@ if (!preg_match('/^[a-f0-9]{64}$/', $token) || dashboardResolveAccountSelectionT
     throw new RuntimeException('Opaque account selection token did not resolve server-side.');
 }
 
-$dashboardSource = file_get_contents(__DIR__ . '/../dashboard.php');
+$dashboardSource = portalPageSource('dashboard.php');
 if (
     !str_contains($dashboardSource, 'switch-account-modal')
     || str_contains($dashboardSource, 'account-selector')

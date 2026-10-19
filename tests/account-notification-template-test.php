@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__.'/../includes/account-notifications.php';
+require_once __DIR__ . '/../app/services/account-notifications.php';
 $originalUrl=getenv('APP_URL');$originalEnvironment=getenv('APP_ENV');
 $checks=0;
 function templateCheck(bool $ok,string $message):void{global $checks;$checks++;if(!$ok)throw new RuntimeException($message);}
@@ -34,7 +34,7 @@ try {
         try{accountNotificationMessage(['event_type'=>'linked','account_code'=>'test','display_name'=>'test','occurred_at'=>0]);}catch(InvalidArgumentException $e){$rejected=true;}
         templateCheck($rejected,'Invalid configured recovery URL accepted.');
     }
-    templateCheck(is_file(__DIR__.'/../forgot-password.php'),'Linked recovery route does not exist.');
+    templateCheck(is_file(__DIR__ . '/../forgot-password.php'),'Linked recovery route does not exist.');
     echo "Account notification template tests passed ($checks assertions).\n";
 } finally {
     putenv($originalUrl===false?'APP_URL':'APP_URL='.$originalUrl);

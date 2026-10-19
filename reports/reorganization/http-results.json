@@ -1,0 +1,258 @@
+[
+  {
+    "path": "assets/css/dashboard.css",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/css/forgot-password.css",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/css/login.css",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/css/portal-shell.css",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/css/register.css",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/css/reset-password.css",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/js/account-linking.js",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/js/account-unlinking.js",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/js/consumer-education.js",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/js/dashboard.js",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/js/ebills-enrollment.js",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/js/forgot-password.js",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/js/login.js",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/js/portal-shell.js",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/js/register.js",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/js/reset-password.js",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/js/session-actions.js",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/js/theme.js",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "assets/images/logo.png",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "index.php",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "register.php",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "forgot-password.php",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "reset-password.php",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "consumer-education.php",
+    "status": 302,
+    "location": "/mco-portal-v2/index.php",
+    "phpError": false
+  },
+  {
+    "path": "dashboard.php",
+    "status": 302,
+    "location": "/mco-portal-v2/index.php",
+    "phpError": false
+  },
+  {
+    "path": "logout.php",
+    "status": 405,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "soa.php",
+    "status": 405,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "api/soa.php",
+    "status": 405,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "resources/ebills-terms.html",
+    "status": 200,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "config/database.php",
+    "status": 403,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "app/controllers/index.php",
+    "status": 403,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "includes/account-context.php",
+    "status": 403,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "database/migrations/20261016_account_notifications.sql",
+    "status": 403,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "storage/reorganization/original.zip",
+    "status": 403,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "tests/dashboard-smoke.php",
+    "status": 403,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "vendor/autoload.php",
+    "status": 403,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "jobs/send-account-notifications.php",
+    "status": 403,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "reports/reorganization/inspection.md",
+    "status": 403,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": ".env.example",
+    "status": 403,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": ".git/config",
+    "status": 403,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "composer.json",
+    "status": 403,
+    "location": null,
+    "phpError": false
+  },
+  {
+    "path": "soa.php",
+    "method": "POST",
+    "status": 401
+  },
+  {
+    "path": "api/soa.php",
+    "method": "POST",
+    "status": 401
+  }
+]
