@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../helpers/philippine-mobile.php';
+
 function portalProfileValues(array $input): array
 {
     $values=[];
@@ -97,7 +99,9 @@ final class EBillsEnrollment
     }
     public function saveProfile(int $userId,array $input,string $csrf):void
     {
-        $this->csrf($userId,$input,$csrf);$v=portalProfileValues($input);
+        $this->csrf($userId,$input,$csrf);
+        $input['contact_number']=portalNormalizeMobileNumber($input['contact_number']??null);
+        $v=portalProfileValues($input);
         $this->pdo->beginTransaction();try{
             $this->profile($userId,true);
             $this->query('UPDATE mco_portal.users SET first_name=?,last_name=?,middle_name=?,extension_name=?,contact_number=? WHERE id=?',[...array_values($v),$userId]);

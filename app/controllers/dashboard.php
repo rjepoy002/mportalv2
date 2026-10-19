@@ -602,6 +602,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 if ($action === 'save_profile') {
                     $ebills->saveProfile($userId,$_POST,dashboardCsrfToken());
+                    unset($_SESSION['profile_contact_error']);
                     dashboardReturn('account-settings','Profile information saved and confirmed.');
                 }
                 if ($action === 'ebills_details') {
@@ -613,7 +614,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $created=$ebills->enroll($userId,$acctNo,$_POST,dashboardCsrfToken());
                     $response=['ok'=>true,'created'=>$created,'message'=>$created ? 'Successfully Enrolled in eBills. Your PALECO account has been enrolled in eBills. Future Statements of Account will be sent to your registered email address through PALECO\'s billing system.' : 'Already Enrolled in eBills. This PALECO account is already registered for eBills.'];
                 }
-            } catch (DomainException $e) { $response=['ok'=>false,'message'=>$e->getMessage()]; }
+            } catch (DomainException $e) {
+                $response=['ok'=>false,'message'=>$e->getMessage()];
+                if ($action === 'save_profile' && $e instanceof PortalMobileNumberException && ($_SERVER['HTTP_ACCEPT']??'') !== 'application/json') {
+                    $_SESSION['profile_contact_error'] = [
+                        'message' => $e->getMessage(),
+                        'value' => is_string($_POST['contact_number']??null) ? substr($_POST['contact_number'],0,256) : '',
+                    ];
+                }
+            }
               catch (Throwable $e) { error_log('eBills profile/enrollment operation unavailable.'); $response=['ok'=>false,'message'=>'We could not complete that request. Your linked account is unchanged. Please try again.']; }
             if (($_SERVER['HTTP_ACCEPT']??'')!=='application/json') dashboardReturn('account-settings',$response['message'],$response['ok']?'success':'error');
             header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store, private');

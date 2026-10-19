@@ -599,10 +599,14 @@
 
                 <section id="profile-settings" class="max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 dark:bg-slate-900 dark:border-slate-700">
                     <h2 class="text-xl font-bold">Profile Settings</h2><p class="mt-2 text-sm">Review and confirm your own name for eBills enrollment. This does not change your current display name or sign-in access.</p>
-                    <form method="post" class="mt-4 grid gap-3 sm:grid-cols-2">
+                    <?php $profileContactError = $_SESSION['profile_contact_error'] ?? null; unset($_SESSION['profile_contact_error']); ?>
+                    <form method="post" data-profile-settings class="mt-4 grid gap-3 sm:grid-cols-2">
                         <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrf) ?>"><input type="hidden" name="action" value="save_profile">
                         <?php foreach(['first_name'=>'First Name','last_name'=>'Last Name','middle_name'=>'Middle Name (optional)','extension_name'=>'Name Extension (optional)','contact_number'=>'Contact Number (optional)'] as $profileKey=>$profileLabel): ?>
-                        <label class="text-sm font-semibold"><?= dashboardEscape($profileLabel) ?><input name="<?= dashboardEscape($profileKey) ?>" value="<?= dashboardEscape($portalProfile[$profileKey]??'') ?>" maxlength="<?= $profileKey==='contact_number'?11:25 ?>" <?= in_array($profileKey,['first_name','last_name'],true)?'required':'' ?> <?= $profileKey==='contact_number'?'pattern="09[0-9]{9}" inputmode="numeric" placeholder="09XXXXXXXXX"':'' ?> class="mt-1 block w-full rounded-xl border border-slate-300 p-2 dark:border-slate-600 dark:bg-slate-800"></label>
+                        <label class="text-sm font-semibold"><?= dashboardEscape($profileLabel) ?><input name="<?= dashboardEscape($profileKey) ?>" value="<?= dashboardEscape($profileKey==='contact_number' && $profileContactError ? $profileContactError['value'] : ($portalProfile[$profileKey]??'')) ?>" <?= $profileKey==='contact_number'?'type="tel" inputmode="tel" autocomplete="tel" data-profile-contact aria-describedby="profile-contact-error" aria-invalid="'.($profileContactError?'true':'false').'" placeholder="09XXXXXXXXX or +639XXXXXXXXX"':'maxlength="25"' ?> <?= in_array($profileKey,['first_name','last_name'],true)?'required':'' ?> class="mt-1 block w-full rounded-xl border border-slate-300 p-2 dark:border-slate-600 dark:bg-slate-800">
+                        <?php if($profileKey==='contact_number'): ?>
+                        <span id="profile-contact-error" class="mt-1 block text-sm font-normal text-red-600" aria-live="polite" <?= $profileContactError?'':'hidden' ?>><?= dashboardEscape($profileContactError['message']??'') ?></span>
+                        <?php endif; ?></label>
                         <?php endforeach; ?>
                         <button class="rounded-xl bg-paleco-700 px-4 py-2 font-semibold text-white sm:col-span-2">Save and Confirm Profile</button>
                     </form>
@@ -1562,6 +1566,7 @@
      JAVASCRIPT
      ========================================================= -->
 
+<script src="assets/js/profile-settings.js"></script>
 <script src="assets/js/theme.js"></script>
 <script src="assets/js/portal-shell.js"></script>
 <?php require __DIR__ . '/../partials/ebills-ui.php'; ?>
