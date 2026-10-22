@@ -1,0 +1,19 @@
+{
+  "checks": 11,
+  "results": [
+    "Copied-route authorization/security suite passed",
+    "Five display-only sections",
+    "No editable fields or forms",
+    "No applicant forms or uploads",
+    "No horizontal overflow at 1440px light",
+    "No horizontal overflow at 1440px dark",
+    "No horizontal overflow at 390px light",
+    "No horizontal overflow at 390px dark",
+    "No horizontal overflow at 320px light",
+    "Mobile sidebar opens",
+    "No runtime exceptions or application/customer requests"
+  ],
+  "scope": "Copied actual preview route with SELECT-only synthetic identity; actual localhost assets, no live authenticated customer access",
+  "errors": [],
+  "blocked": []
+}

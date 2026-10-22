@@ -22,10 +22,20 @@ $portalInitial = strtoupper(substr(trim($portalUserDisplayName), 0, 1) ?: 'M');
     </div>    <nav class="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-5" aria-label="Main navigation">
         <?php foreach (portalNavigationItems() as $key => $item): ?>
             <?php $active = $portalActivePage === $key; ?>
+            <?php if (($item['disabled'] ?? false) === true): ?>
+                <div role="link" aria-disabled="true" aria-label="<?= portalShellEscape($item['label'] . ', ' . $item['status']) ?>" title="<?= portalShellEscape($item['label'] . ' — ' . $item['status']) ?>" class="portal-nav-link text-slate-500 dark:text-slate-400">
+                    <?= portalNavigationIcon($item['icon']) ?>
+                    <span class="portal-expanded-only">
+                        <span class="block"><?= portalShellEscape($item['label']) ?></span>
+                        <span class="block text-xs"><?= portalShellEscape($item['status']) ?></span>
+                    </span>
+                </div>
+            <?php else: ?>
             <a href="<?= portalShellEscape($item['href']) ?>" class="portal-nav-link <?= $active ? 'bg-paleco-50 text-paleco-800 dark:bg-paleco-900 dark:text-paleco-100' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white' ?>" <?= $active ? 'aria-current="page"' : '' ?> title="<?= portalShellEscape($item['label']) ?>">
                 <?= portalNavigationIcon($item['icon']) ?>
-                <span class="portal-expanded-only"><?= portalShellEscape($item['label']) ?></span>
+                <span class="portal-expanded-only"><?= portalShellEscape($item['label']) ?><?php if (isset($item['status'])): ?><span class="block text-xs"><?= portalShellEscape($item['status']) ?></span><?php endif; ?></span>
             </a>
+            <?php endif; ?>
         <?php endforeach; ?>
     </nav>
     <div class="shrink-0 border-t border-slate-100 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-slate-800">

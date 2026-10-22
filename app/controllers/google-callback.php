@@ -1,6 +1,12 @@
 <?php
 
-session_start();
+require_once __DIR__ . '/../helpers/session-security.php';
+portalSessionStart();
+header('Referrer-Policy: no-referrer');
+if (!portalOAuthStateValid($_GET['state'] ?? null) || !is_string($_GET['code'] ?? null) || isset($_GET['error'])) {
+    http_response_code(400);
+    exit('Unable to complete Google sign-in. Please try again.');
+}
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../config/google.php';
@@ -43,6 +49,10 @@ try {
 
     $userInfo = $googleService->userinfo->get();
 
+    if (!portalGoogleIdentity($userInfo->id, $userInfo->email, $userInfo->verified_email)) {
+        throw new RuntimeException('Google identity unavailable.');
+    }
+
     $googleId = $userInfo->id;
     $email    = strtolower(trim($userInfo->email));
     $name     = trim($userInfo->name);
@@ -70,9 +80,17 @@ try {
 
     if ($user) {
 
+        if ($user['status'] !== 'active') throw new RuntimeException('Sign-in unavailable.');
+
         // If Google ID is not connected yet,
         // connect this Google account.
         if (empty($user['google_id'])) {
+
+            // Google is not authoritative for ownership of arbitrary third-party
+            // mailboxes. Do not automatically link those existing portal users.
+            if (!str_ends_with($email, '@gmail.com') && empty($userInfo->hd)) {
+                throw new RuntimeException('Sign-in unavailable.');
+            }
 
             $stmt = $pdo->prepare("
                 UPDATE users
@@ -93,7 +111,7 @@ try {
         } elseif ($user['google_id'] !== $googleId) {
 
             // The email belongs to another Google account.
-            die('This email address is already connected to another Google account.');
+            throw new RuntimeException('Sign-in unavailable.');
 
         }
 
@@ -163,19 +181,14 @@ try {
 
     if ($user['status'] !== 'active') {
 
-        die('Your account is currently unavailable.');
+        throw new RuntimeException('Sign-in unavailable.');
     }
 
     // =========================================
     // CREATE LOGIN SESSION
     // =========================================
 
-    session_regenerate_id(true);
-
-    $_SESSION['user_id'] = $user['id'];
-    $_SESSION['user_email'] = $user['email'];
-    $_SESSION['user_name'] = $user['name'];
-    unset($_SESSION['SelectedAcctNo']);
+    portalAuthenticated($user);
     $_SESSION['logged_in'] = true;
 
     // =========================================
@@ -185,10 +198,10 @@ try {
     header('Location: dashboard.php');
     exit;
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
 
     error_log(
-        'Google Login Error: ' . $e->getMessage()
+        'Google sign-in failed.'
     );
 
     die('Unable to complete Google login. Please try again.');

@@ -1,0 +1,23 @@
+{
+  "checks": 14,
+  "results": [
+    "Actual partial displays New Connection and Coming Soon",
+    "Unavailable item has disabled semantics, plug SVG, no destination/tab stop/current state",
+    "Four existing navigation links preserved in order",
+    "Clicking unavailable item does not navigate",
+    "Keyboard Tab skips unavailable item",
+    "Sidebar item fits 1440px light",
+    "Sidebar item fits 1440px dark",
+    "Sidebar item fits 390px light",
+    "Sidebar item fits 390px dark",
+    "Sidebar item fits 320px light",
+    "Collapsed desktop retains accessible Coming Soon label without overflow",
+    "Actual localhost disabled New Connection endpoint returns 404",
+    "No sidebar JavaScript runtime exceptions",
+    "Preview makes only static localhost asset requests, no portal action requests"
+  ],
+  "screenshotScope": "Actual unchanged partials rendered with synthetic display data outside portal; actual localhost assets. No authenticated dashboard/customer access.",
+  "actualEndpointStatus": 404,
+  "exceptions": [],
+  "blocked": []
+}

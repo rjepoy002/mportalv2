@@ -1,0 +1,16 @@
+{
+  "browser": "Chrome/155.0.8059.85",
+  "checks": 6,
+  "results": [
+    "Browser authenticated synthetic zero-account module access",
+    "Browser private response no-store",
+    "No browser storage after return-intent login",
+    "Local HTTP cookie remains HttpOnly/Lax",
+    "No external mail/provider/assets requests",
+    "No browser runtime exceptions"
+  ],
+  "externalRequests": [],
+  "exceptions": [],
+  "syntheticOnly": true,
+  "visualAcceptance": false
+}

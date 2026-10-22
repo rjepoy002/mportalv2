@@ -1,6 +1,27 @@
 <?php
 
-session_start();
+require_once __DIR__ . '/../helpers/session-security.php';
+portalSessionStart();
+require_once __DIR__ . '/../services/auth-rate-limit.php';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!portalAuthCsrfValid($_POST['csrf_token'] ?? null)) {
+        http_response_code(419);
+        if (($_POST['action'] ?? '') === 'resend_otp') {
+            header('Content-Type: application/json');
+            exit(json_encode(['success' => false, 'message' => 'Please reload the registration page and try again.']));
+        }
+        exit('Please reload the registration page and try again.');
+    }
+    $limitEmail = $_SESSION['registration']['email'] ?? ($_POST['email'] ?? '');
+    $limitAction = ($_POST['action'] ?? '') === 'verify_otp' ? 'registration_verify' : 'registration';
+    try { $allowed = portalAuthAttemptAllowed($limitAction, is_string($limitEmail) ? $limitEmail : ''); }
+    catch (Throwable $failure) { $allowed = false; }
+    if (!$allowed) {
+        http_response_code(429);
+        header('Content-Type: application/json');
+        exit(json_encode(['success' => false, 'message' => 'Please wait before trying registration again.']));
+    }
+}
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../services/mailer.php';
@@ -77,9 +98,9 @@ if (
         $errors[] = $e->getMessage();
         $name = '';
     }
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $confirmPassword = $_POST['confirm_password'] ?? '';
+    $email = is_string($_POST['email'] ?? null) ? trim($_POST['email']) : '';
+    $password = is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
+    $confirmPassword = is_string($_POST['confirm_password'] ?? null) ? $_POST['confirm_password'] : '';
 
 
     // ---------------------------------------------
@@ -175,7 +196,7 @@ if (
         if ($stmt->fetch()) {
 
             $errors[] =
-                'An account with this email address already exists.';
+                'Registration could not be completed. Please sign in or use password recovery if needed.';
         }
     }
 
@@ -345,7 +366,7 @@ if (
         } catch (Throwable $e) {
 
             error_log(
-                'Registration error: ' . $e->getMessage()
+                'Registration request failed.'
             );
 
             unset($_SESSION['registration']);
@@ -578,7 +599,7 @@ if (
     } catch (Throwable $e) {
 
         error_log(
-            'Resend OTP error: ' . $e->getMessage()
+            'Registration resend failed.'
         );
 
         echo json_encode([
@@ -604,7 +625,7 @@ if (
     $otp = preg_replace(
         '/[^0-9]/',
         '',
-        $_POST['otp'] ?? ''
+        is_string($_POST['otp'] ?? null) ? $_POST['otp'] : ''
     );
 
 

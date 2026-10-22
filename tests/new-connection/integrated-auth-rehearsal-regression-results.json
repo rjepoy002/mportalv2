@@ -1,0 +1,71 @@
+{
+  "date": "2026-10-21",
+  "synthetic_only": true,
+  "integrated_checks": 426,
+  "browser_checks": 6,
+  "php_syntax_files": 5,
+  "javascript_syntax": "PASS",
+  "protected_source_comparison": "app, config and database/migrations byte-identical before/after",
+  "results": [
+    {
+      "name": "auth-security",
+      "command": "C:/xampp/php/php.exe tests/new-connection/auth-security-test.php",
+      "exit_code": 0,
+      "output": "Authentication security tests passed (42 assertions; isolated HTTP and server-TLS fixtures, synthetic identities only)."
+    },
+    {
+      "name": "password-reset",
+      "command": "C:/xampp/php/php.exe tests/password-reset-test.php",
+      "exit_code": 0,
+      "output": "Password recovery PHP regression tests passed (PDO/mail doubles; real file limiter)."
+    },
+    {
+      "name": "session-actions",
+      "command": "C:/xampp/php/php.exe tests/session-actions-http-test.php",
+      "exit_code": 0,
+      "output": "Session action HTTP tests passed (22 assertions; synthetic sessions only)."
+    },
+    {
+      "name": "return-helper",
+      "command": "C:/xampp/php/php.exe tests/new-connection/auth-return-intent-test.php",
+      "exit_code": 0,
+      "output": "Return intent helper passed (54 assertions; pure synthetic sessions)."
+    },
+    {
+      "name": "google-current-review",
+      "command": "C:/xampp/php/php.exe tests/new-connection/google-verification-review-test.php",
+      "exit_code": 0,
+      "output": "Google review passed (206 assertions; 36 current branches; separate proposed model; no DB/verification changes)."
+    },
+    {
+      "name": "sql-policy-claims",
+      "command": "C:/xampp/php/php.exe tests/new-connection/google-policy-claim-test.php",
+      "exit_code": 0,
+      "output": "Google policy and SQL claims passed (346 assertions)."
+    },
+    {
+      "name": "new-connection-foundation",
+      "command": "C:/xampp/php/php.exe tests/new-connection/foundation-test.php",
+      "exit_code": 0,
+      "output": "New Connection foundation passed (41 assertions; isolated HTTP, synthetic users, SELECT-only PDO)."
+    },
+    {
+      "name": "database-foundation",
+      "command": "C:/xampp/php/php.exe tests/new-connection/database-foundation-test.php",
+      "exit_code": 0,
+      "output": "Database foundation passed (68 assertions; disposable schema; real MariaDB FKs/triggers/transactions and two-process concurrency)."
+    },
+    {
+      "name": "structure",
+      "command": "C:/xampp/php/php.exe tests/structure-test.php",
+      "exit_code": 0,
+      "output": "Structure and dependency checks passed (194 assertions)."
+    },
+    {
+      "name": "readonly-contract",
+      "command": "C:/xampp/php/php.exe tests/paleco-readonly-contract.php",
+      "exit_code": 0,
+      "output": "PALECO read-only contract check passed."
+    }
+  ]
+}

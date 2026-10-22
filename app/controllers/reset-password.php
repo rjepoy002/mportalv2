@@ -6,6 +6,7 @@ header('Pragma: no-cache');
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../services/password-recovery.php';
+$csrfToken = recovery_csrf_token();
 
 $message = '';
 $messageType = '';
@@ -20,11 +21,8 @@ $messageType = '';
  * when the password form is submitted.
  */
 
-$token = trim(
-    $_GET['token']
-    ?? $_POST['token']
-    ?? ''
-);
+$rawToken = $_GET['token'] ?? $_POST['token'] ?? '';
+$token = is_string($rawToken) ? trim($rawToken) : '';
 
 $user = null;
 $resetRecord = null;
@@ -99,10 +97,10 @@ if (
 ) {
 
     $newPassword =
-        $_POST['password'] ?? '';
+        is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
 
     $confirmPassword =
-        $_POST['confirm_password'] ?? '';
+        is_string($_POST['confirm_password'] ?? null) ? $_POST['confirm_password'] : '';
 
 
     /*
@@ -111,7 +109,11 @@ if (
      * -----------------------------------------
      */
 
-    if ($newPassword === '') {
+    if (!is_string($_POST['csrf_token'] ?? null) || !hash_equals($csrfToken, $_POST['csrf_token'])) {
+        http_response_code(419);
+        $message = 'Please reload the page and try again.';
+        $messageType = 'error';
+    } elseif ($newPassword === '') {
 
         $message =
             'Please enter a new password.';

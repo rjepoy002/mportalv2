@@ -91,7 +91,7 @@ class ResetStatement extends PDOStatement
 
 function controller($file, $pdo, $post, $get = []): array
 {
-    if ($file === 'forgot-password.php' && $post && !array_key_exists('csrf_token', $post)) {
+    if (in_array($file, ['forgot-password.php', 'reset-password.php'], true) && $post && !array_key_exists('csrf_token', $post)) {
         $post['csrf_token'] = recovery_csrf_token();
     }
     $_SERVER['REQUEST_METHOD'] = $post ? 'POST' : 'GET';
@@ -192,6 +192,8 @@ try {
 
     [, $form] = controller('reset-password.php', $db, [], ['token' => $token]);
     check(str_contains($form, 'value="' . $token . '"'), 'Hidden POST token');
+    [$csrfReset] = controller('reset-password.php', $db, ['token' => $token, 'password' => 'Password123', 'confirm_password' => 'Password123', 'csrf_token' => 'invalid']);
+    check($csrfReset === 'Please reload the page and try again.' && !$db->password && !$db->records[$hash]['used'], 'Reset CSRF rejection preserves password and reset token');
     $invalidMessage = 'This password reset link is invalid or has expired.';
     foreach (['', 'bad', str_repeat('a', 64)] as $invalid) {
         [$message] = controller('reset-password.php', $db, [], ['token' => $invalid]);

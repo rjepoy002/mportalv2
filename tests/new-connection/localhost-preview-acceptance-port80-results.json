@@ -1,0 +1,34 @@
+[
+    {
+        "host":  null,
+        "cache":  "private, no-store",
+        "proxy":  null,
+        "location":  "index.php",
+        "path":  "new-connection-preview.php",
+        "status":  302
+    },
+    {
+        "host":  null,
+        "cache":  "no-store, private",
+        "proxy":  null,
+        "location":  null,
+        "path":  "new-connection.php",
+        "status":  404
+    },
+    {
+        "host":  "public.example.invalid",
+        "cache":  "private, no-store",
+        "proxy":  null,
+        "location":  null,
+        "path":  "new-connection-preview.php",
+        "status":  404
+    },
+    {
+        "host":  null,
+        "cache":  "private, no-store",
+        "proxy":  "192.0.2.1",
+        "location":  null,
+        "path":  "new-connection-preview.php",
+        "status":  404
+    }
+]

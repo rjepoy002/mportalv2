@@ -1,0 +1,28 @@
+{
+    "date": "2026-10-21",
+    "checks": 20,
+    "results": [
+        "First atomic claim permits module navigation",
+        "Forked pre-regeneration session cannot replay claim",
+        "Independent worker shares authoritative claim state",
+        "Capacity exhaustion fails closed",
+        "Exact helper deadline rejects before extending storage",
+        "Expired claims cleaned without refreshing old claims",
+        "Storage outage cannot become navigation success",
+        "Unknown commit outcome propagates fail-closed",
+        "Lost acknowledgment retry cannot reclaim committed digest",
+        "Explicit fresh flow can recover after unknown outcome",
+        "Unapproved clock skew denied",
+        "Clock regression denied",
+        "Backend independently rejects expired claim",
+        "Backend rejects unbounded retention request",
+        "Backend accepts only digests",
+        "Explicit mock skew bound accepted",
+        "Beyond configured skew denied",
+        "Claim metadata contains only digest and expiry",
+        "Claim metadata contains only digest and expiry",
+        "Ordinary login does not require module claim storage"
+    ],
+    "implementation": "In-memory contract mock; NOT deployed shared storage",
+    "real_infrastructure_provisioned": false
+}

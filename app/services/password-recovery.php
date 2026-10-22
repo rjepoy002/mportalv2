@@ -1,12 +1,11 @@
 <?php
 
 require_once __DIR__ . '/../helpers/recovery-log.php';
+require_once __DIR__ . '/../helpers/session-security.php';
 
 function recovery_csrf_token(): string
 {
-    if (session_status() === PHP_SESSION_NONE && !session_start()) {
-        throw new RuntimeException('Recovery session unavailable.');
-    }
+    portalSessionStart();
     if (empty($_SESSION['recovery_csrf'])) $_SESSION['recovery_csrf'] = bin2hex(random_bytes(32));
     return $_SESSION['recovery_csrf'];
 }

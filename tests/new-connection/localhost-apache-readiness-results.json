@@ -1,0 +1,45 @@
+{
+    "date": "2026-10-21",
+    "checks": 23,
+    "results": [
+        "Separate loopback Apache starts without changing running XAMPP",
+        "Actual copied login template renders under Apache subdirectory",
+        "Login renders existing CSRF field and relative registration link",
+        "Actual copied registration template renders under Apache",
+        "OTP presentation branch renders; no OTP verification\/mail performed by this Apache fixture",
+        "Dedicated fixture root rendering works",
+        "Subdirectory slash redirect preserves application prefix",
+        "Requests execute actual Apache PHP module",
+        "Apache session strict mode enabled",
+        "Apache HTTP session cookie is HttpOnly\/Lax without Secure",
+        "Session-helper CSRF denies invalid token under Apache (wire status 500)",
+        "Actual session helper regenerates Apache session using synthetic stand-in identity",
+        "Authentication clears pre-authentication CSRF state",
+        "Copied logout controller requires confirmation POST",
+        "Copied logout rejects invalid token under Apache (wire status 500)",
+        "Copied logout uses relative login redirect compatible with subdirectory",
+        "Copied logout destroys synthetic session",
+        "Copied Google initiation builds local-double redirect without contacting provider",
+        "Fixture callback constant retains subdirectory; not inferred from Host",
+        "Actual copied module controller denies feature-disabled access before DB bootstrap",
+        "Private fixture code inaccessible from public Apache alias",
+        "Relative local CSS resource resolves under subdirectory",
+        "Existing localhost\/mportalv2 module is feature-disabled (read-only gate request)"
+    ],
+    "compatibility_failures": [
+        "Expected CSRF status 419, observed Apache wire status 500",
+        "Expected logout CSRF status 419, observed Apache wire status 500"
+    ],
+    "deployment_ready": false,
+    "runtime": "Apache 2.4.58 \/ PHP apache2handler",
+    "synthetic_only": true,
+    "database_connections": 0,
+    "provider_or_email_requests": 0,
+    "limitations": [
+        "No actual portal login\/register\/recovery controller request; their bootstrap selects actual DB.",
+        "Separate Apache configuration, not existing virtual-host end-to-end authentication.",
+        "OTP presentation only under Apache; complete journeys are disposable PHP -S regressions.",
+        "No real Google callback, HTTPS cookie or visual dialog acceptance."
+    ],
+    "cleanup": "Separate Apache stopped and temporary resources removed"
+}

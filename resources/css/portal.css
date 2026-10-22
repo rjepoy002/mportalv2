@@ -1,0 +1,5 @@
+/* Loaded only by the existing utility-based portal pages, before page CSS.
+   Keep preflight consistent with the former Tailwind v3 runtime stylesheet. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

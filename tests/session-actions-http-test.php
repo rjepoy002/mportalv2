@@ -30,10 +30,11 @@ try{
     sessionCheck(file_get_contents($path)===$before,'GET changed the session.');
     [$body,$headers]=requestLogout('POST',$id,['csrf_token'=>'bad','intent'=>'logout']);
     sessionCheck(str_contains($headers[0],'419'),'Invalid CSRF accepted.');
-    sessionCheck(file_get_contents($path)===$before,'Invalid CSRF changed the session.');
+    $withoutActivity=static fn($raw)=>preg_replace('/portal_(?:created_at|last_seen)\|i:\d+;/', '', $raw);
+    sessionCheck($withoutActivity(file_get_contents($path))===$withoutActivity($before),'Invalid CSRF changed business session state.');
     [$body,$headers]=requestLogout('POST',$id,['csrf_token'=>str_repeat('c',64),'intent'=>'invalid']);
     sessionCheck(str_contains($headers[0],'400'),'Unknown action accepted.');
-    sessionCheck(file_get_contents($path)===$before,'Invalid action changed the session.');
+    sessionCheck($withoutActivity(file_get_contents($path))===$withoutActivity($before),'Invalid action changed business session state.');
     foreach(['logout'=>'index.php','reset'=>'forgot-password.php'] as $intent=>$target){
         foreach([true,false] as $json){
             $id=seedSession();

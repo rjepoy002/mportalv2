@@ -1,6 +1,7 @@
 <?php
 
-session_start();
+require_once __DIR__ . '/../helpers/session-security.php';
+portalSessionStart();
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../config/google.php';
@@ -20,6 +21,9 @@ $client->addScope('profile');
 $client->setPrompt('select_account');
 
 // Generate Google login URL
+$state = bin2hex(random_bytes(32));
+$_SESSION['oauth_pending'] = ['state' => $state, 'created' => time()];
+$client->setState($state);
 $authUrl = $client->createAuthUrl();
 
 // Redirect user to Google

@@ -11,7 +11,7 @@
 
 body {
 
-    font-family: "Inter", sans-serif;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
     background: #f4f8f6;
 

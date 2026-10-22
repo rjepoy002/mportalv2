@@ -1,6 +1,13 @@
 <?php
 
-session_start();
+require_once __DIR__ . '/../helpers/session-security.php';
+portalSessionStart();
+require_once __DIR__ . '/../services/auth-rate-limit.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !portalAuthCsrfValid($_POST['csrf_token'] ?? null)) {
+    http_response_code(419);
+    exit('Please reload the sign-in page and try again.');
+}
 
 require_once __DIR__ . '/../../config/database.php';
 
@@ -23,10 +30,15 @@ if (isset($_GET['reset']) && $_GET['reset'] === 'success') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
+    $email = is_string($_POST['email'] ?? null) ? trim($_POST['email']) : '';
+    $password = is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
+    try { $allowed = portalAuthAttemptAllowed('login', $email); }
+    catch (Throwable $failure) { $allowed = false; }
 
-    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if (!$allowed) {
+        http_response_code(429);
+        $error = 'Sign-in is temporarily unavailable. Please try again later.';
+    } elseif ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 255) {
 
         $error = 'Please enter a valid email address.';
 
@@ -36,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } else {
 
+        try {
         $stmt = $pdo->prepare("
             SELECT
                 id,
@@ -54,38 +67,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $user = $stmt->fetch();
 
-        if (!$user || !password_verify($password, $user['password_hash'])) {
+        $passwordValid = password_verify($password, $user['password_hash'] ?? '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.');
+        if (!$user || !$passwordValid || $user['status'] !== 'active' || $user['email_verified_at'] === null) {
 
             $error = 'Invalid email or password.';
 
-            if (
-                $user &&
-                !empty($user['google_id'])
-            ) {
-
-                $error .= ' If you previously signed in with Google, you can continue with Google or reset your password.';
-
-            }
-
-        } elseif ($user['status'] !== 'active') {
-
-            $error = 'Your account is not active.';
-
-        } elseif ($user['email_verified_at'] === null) {
-
-            $error = 'Please verify your email address first.';
-
         } else {
 
-            session_regenerate_id(true);
-
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_email'] = $user['email'];
-            $_SESSION['user_name'] = $user['name'];
-            unset($_SESSION['SelectedAcctNo']);
+            portalAuthenticated($user);
 
             header('Location: dashboard.php');
             exit;
+        }
+        } catch (Throwable $failure) {
+            http_response_code(503);
+            $error = 'Sign-in is temporarily unavailable. Please try again later.';
         }
     }
 }

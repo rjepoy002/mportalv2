@@ -19,7 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Allow: POST');
     logoutFailure(405, 'Please use the Sign Out confirmation in the portal.');
 }
-if (session_status() === PHP_SESSION_NONE && !session_start()) logoutFailure(503, 'Your session is temporarily unavailable. Please try again.');
+require_once __DIR__ . '/../helpers/session-security.php';
+try { portalSessionStart(); }
+catch (Throwable $failure) { logoutFailure(503, 'Your session is temporarily unavailable. Please try again.'); }
 if (empty($_SESSION['user_id'])) logoutFailure(401, 'Your session has expired. Please return to sign in.');
 $token = $_POST['csrf_token'] ?? null;
 $expected = $_SESSION['dashboard_csrf'] ?? '';
@@ -45,11 +47,8 @@ if (ini_get("session.use_cookies")) {
     setcookie(
         session_name(),
         '',
-        time() - 42000,
-        $params["path"],
-        $params["domain"],
-        $params["secure"],
-        $params["httponly"]
+        ['expires' => time() - 42000, 'path' => $params['path'], 'domain' => $params['domain'],
+         'secure' => $params['secure'], 'httponly' => true, 'samesite' => 'Lax']
     );
 }
 

@@ -875,7 +875,7 @@ resendOtp.addEventListener(
                     },
 
                     body:
-                        "action=resend_otp"
+                        "action=resend_otp&csrf_token=" + encodeURIComponent(document.querySelector('#otpForm input[name="csrf_token"]').value)
                 }
             );
 

@@ -37,58 +37,14 @@
     </script>
 
 
-    <!--
-        Development only.
-        Requires internet access for Tailwind CDN.
-    -->
+    <!-- Production utility styles are generated ahead of deployment. -->
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="assets/css/portal-utilities.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="assets/vendor/chart.js/chart.umd.js"></script>
 
 
-    <script>
 
-        tailwind.config = {
-
-            darkMode: 'class',
-
-            theme: {
-
-                extend: {
-
-                    colors: {
-
-                        paleco: {
-
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            200: '#bbf7d0',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                            800: '#166534',
-                            900: '#14532d'
-
-                        }
-
-                    },
-
-                    boxShadow: {
-
-                        card:
-                            '0 1px 3px rgba(15,23,42,.06),' +
-                            '0 1px 2px rgba(15,23,42,.04)'
-
-                    }
-
-                }
-
-            }
-
-        };
-
-    </script>
 
     <link rel="stylesheet" href="assets/css/portal-shell.css">
     <script>

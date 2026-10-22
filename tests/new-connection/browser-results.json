@@ -1,0 +1,166 @@
+{
+  "browser": "Chrome/155.0.8059.85",
+  "checks": 34,
+  "results": [
+    "Login renders CSRF in actual browser",
+    "Login mobile layout has no horizontal overflow",
+    "Actual browser local HTTP cookie HttpOnly/Lax and non-Secure",
+    "Browser invalid login CSRF rejected",
+    "Browser password login with valid form CSRF",
+    "Actual New Connection controller/view rendered",
+    "Payment visit and signature information visible",
+    "New Connection no horizontal overflow 1440 false",
+    "New Connection responsive columns 1440 false",
+    "New Connection theme 1440 false",
+    "New Connection no horizontal overflow 1440 true",
+    "New Connection responsive columns 1440 true",
+    "New Connection theme 1440 true",
+    "New Connection no horizontal overflow 390 false",
+    "New Connection responsive columns 390 false",
+    "New Connection theme 390 false",
+    "New Connection no horizontal overflow 390 true",
+    "New Connection responsive columns 390 true",
+    "New Connection theme 390 true",
+    "Mobile sidebar opens",
+    "Logout confirmation opens",
+    "Logout cancel preserves session",
+    "Logout removes protected access",
+    "Browser denies inactive fixture session",
+    "Browser denies unverified fixture session",
+    "Browser denies expired fixture session",
+    "Registration delivered OTP only to synthetic transport",
+    "Actual registration form and OTP browser workflow",
+    "Newly registered user without a linked account accesses New Connection",
+    "Recovery sends reset link only to synthetic transport",
+    "Actual forgot/reset forms with valid CSRF and synthetic token",
+    "Login after synthetic password reset",
+    "Feature disabled denies browser access",
+    "Actual browser login rate limit after ten attempts, without reset/bypass"
+  ],
+  "blocked": [
+    "Tailwind CDN styling did not load: complete responsive shell and visible light/dark styling cannot be accepted"
+  ],
+  "networkFailures": [
+    {
+      "resource": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.tailwindcss.com/",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.tailwindcss.com/",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    },
+    {
+      "resource": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    }
+  ],
+  "runtimeExceptions": [],
+  "screenshots": [
+    "login-desktop.png",
+    "login-mobile.png",
+    "new-connection-1440-dark.png",
+    "new-connection-1440-light.png",
+    "new-connection-390-dark.png",
+    "new-connection-390-light.png"
+  ]
+}

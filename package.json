@@ -1,0 +1,12 @@
+{
+  "name": "paleco-mco-portal-assets",
+  "private": true,
+  "scripts": {
+    "build:assets": "tailwindcss -c tailwind.config.cjs -i resources/css/portal.css -o assets/css/portal-utilities.css --minify && node resources/build/copy-vendor-assets.cjs"
+  },
+  "devDependencies": {
+    "bootstrap-icons": "1.11.3",
+    "chart.js": "4.5.1",
+    "tailwindcss": "3.4.17"
+  }
+}

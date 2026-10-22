@@ -7,4 +7,4 @@ Options -Indexes
 </FilesMatch>
 
 RewriteEngine On
-RewriteRule ^(?:\.git|\.agents|\.codex|\.aws)(?:/|$) - [F,L]
+RewriteRule ^(?:\.git|\.agents|\.codex|\.aws|node_modules)(?:/|$) - [F,L]

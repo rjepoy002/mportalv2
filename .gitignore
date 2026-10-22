@@ -5,3 +5,6 @@
 /.htaccess
 
 /storage/reorganization/
+/storage/auth-rate-limits/
+/node_modules/
+/.tmp/
